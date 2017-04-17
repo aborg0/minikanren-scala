@@ -38,8 +38,8 @@ import info.hircus.kanren.Prelude._
 object RunSpecification extends Properties("Run") {
   import Prop.forAll
 
-  val v = make_var('v)
-  val w = make_var('w)
+  private val v = make_var('v)
+  private val w = make_var('w)
   
   property("==") = forAll { n: Int =>
     run(1, v)(v === n) == List(n)
@@ -52,8 +52,8 @@ object RunSpecification extends Properties("Run") {
   property("all0") = run(-1, v)(all()) == List(Symbol("_.0"))
   property("all1") = forAll { n: Int => run(-1, v)(all(v === n)) == List(n) }
   property("all*") = forAll { (m: Int, n: Int) =>
-    (m==n ||
-     run(-1, v)(all(v === n, w === m)) == List(n))
+    m == n ||
+      run(-1, v)(all(v === n, w === m)) == List(n)
   }
 
   property("all-any") = forAll { (m: Int, n: Int) =>

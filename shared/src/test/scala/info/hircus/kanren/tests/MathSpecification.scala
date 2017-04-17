@@ -53,12 +53,12 @@ object MathSpecification extends Properties("Math") {
 //    z <- Gen.choose(min, max)
 //  } yield (x,y,z)
 
-  val b = make_var('b)
-  val x = make_var('x)
-  val y = make_var('y)
-  val r = make_var('r) // remainder
-  val c = make_var('c) // carry
-  val s = make_var('s) // sum
+  private val b = make_var('b)
+  private val x = make_var('x)
+  private val y = make_var('y)
+  private val r = make_var('r) // remainder
+  private val c = make_var('c) // carry
+  private val s = make_var('s) // sum
   
   property("bit-xor-o 0") = run(-1, s)(both(bit_xor_o(x,y,0), (x,y) === s)) == List((0,0),(1,1))
   property("bit-xor-o 1") = run(-1, s)(both(bit_xor_o(x,y,1), (x,y) === s)) == List((1,0),(0,1))
@@ -66,7 +66,7 @@ object MathSpecification extends Properties("Math") {
   property("bit-and-o 1") = run(-1, s)(both(bit_and_o(x,y,1), (x,y) === s)) == List((1,1))
 
   property("digit-o") = {
-    ((run(-1, x)(digit_o(x))) map read_num _) == ((0 until 10).toList)
+    (run(-1, x)(digit_o(x)) map read_num) == (0 until 10).toList
   }
 
   private def floor_log2(n: Double) = {
@@ -81,23 +81,23 @@ object MathSpecification extends Properties("Math") {
 
   } }
 
-  property("<lo") = forAll(pairGen(0, 20)) { p => p match {
-    case (n,m) => {
-      val x = (Math.exp(n).toInt)
-      val y = (Math.exp(m).toInt)
-      (floor_log2(x) < floor_log2(y) ==
-	(run(-1, s)(lt_len_o(build_num(x),
-			     build_num(y))) != Nil) ) }
-  } }
+  property("<lo") = forAll(pairGen(0, 20)) {
+    case (n, m) =>
+      val x = Math.exp(n).toInt
+      val y = Math.exp(m).toInt
+      (floor_log2(x) < floor_log2(y)) ==
+        (run(-1, s)(lt_len_o(build_num(x),
+          build_num(y))) != Nil)
+  }
 
-  property("<o") = forAll(pairGen(MIN_INT, MAX_INT)) { p => p match {
-    case (n,m) =>
+  property("<o") = forAll(pairGen(MIN_INT, MAX_INT)) {
+    case (n, m) =>
       (n < m) == (run(-1, x)(lt_o(build_num(n), build_num(m))) != Nil)
-  } }
+  }
 
   property("half-adder-o") = {
     ((run(-1, s)(both(half_adder_o(x,y,r,c),
-                     list2pair(List(x,y,r,c)) === s)) map pair2list _ )
+                     list2pair(List(x,y,r,c)) === s)) map pair2list )
      ==
        List(List(0,0,0,0),
             List(1,0,1,0),
@@ -106,7 +106,7 @@ object MathSpecification extends Properties("Math") {
 
   property("full-adder-o") = {
     ((run(-1, s)(both(full_adder_o(b,x,y,r,c),
-                      list2pair(List(b,x,y,r,c)) === s)) map pair2list _ )
+                      list2pair(List(b,x,y,r,c)) === s)) map pair2list )
      ==
        List(List(0,0,0,0,0),
             List(1,0,0,1,0),
@@ -118,13 +118,13 @@ object MathSpecification extends Properties("Math") {
             List(1,1,1,1,1)) ) }
 
   property("gen-adder-o") =
-    ( (run(-1,s)(gen_adder_o(1, list2pair(List(0,1,1)),
-                             list2pair(List(1,1)), s))) map pair2list _) == List(List(0,1,0,1))
+    ( run(-1, s)(gen_adder_o(1, list2pair(List(0, 1, 1)),
+      list2pair(List(1, 1)), s)) map pair2list) == List(List(0,1,0,1))
 
   property("adder-o") = {
-    val res = ((run(-1, s)(both(adder_o(0, x, y, list2pair(List(1,0,1))),
-                               (x,(y,Nil)) === s))) map pair2list _ )
-    ( (res map { l: List[Any] => l map pair2list _ } )
+    val res = run(-1, s)(both(adder_o(0, x, y, list2pair(List(1, 0, 1))),
+      (x, (y, Nil)) === s)) map pair2list
+    ( (res map { l: List[Any] => l map pair2list } )
      ==
        List(List(List(1,0,1), Nil),
             List(Nil, List(1,0,1)),
@@ -147,13 +147,13 @@ object MathSpecification extends Properties("Math") {
                      build_num(p._1+p._2+1),
                      s)) == Nil }
 
-  property("mul_o prod") = forAll(pairGen(0,100)) { p => p match {
-    case (x,y) => {
-      val bx = build_num(x)
-      val by = build_num(y)
-      val bz = build_num(x*y)
+  property("mul_o prod") = forAll(pairGen(0,100)) {
+    case (xGen, yGen) =>
+      val bx = build_num(xGen)
+      val by = build_num(yGen)
+      val bz = build_num(xGen * yGen)
       run(-1, s)(mul_o(bx, by, s)) == List(bz)
-    } }}
+  }
 
   /* same behavior as Scheme MK */
   property("mul_o zero") = {
@@ -163,20 +163,20 @@ object MathSpecification extends Properties("Math") {
   }
 
   /* next two are very slow; must debug */
-  property("mul_o mul0") = forAll(pairGen(1,10)) { p => p match {
-    case (x,y) => {
-      val bx = build_num(x)
-      val by = build_num(y)
-      val bz = build_num(x*y)
+  property("mul_o mul0") = forAll(pairGen(1,10)) {
+    case (xGen, yGen) =>
+      val bx = build_num(xGen)
+      val by = build_num(yGen)
+      val bz = build_num(xGen * yGen)
       run(-1, s)(mul_o(s, by, bz)) == List(bx)
-    } }}
+  }
 
-  property("mul_o mul1") = forAll(pairGen(1,10)) { p => p match {
-    case (x,y) => {
-      val bx = build_num(x)
-      val by = build_num(y)
-      val bz = build_num(x*y)
+  property("mul_o mul1") = forAll(pairGen(1,10)) {
+    case (xGen, yGen) =>
+      val bx = build_num(xGen)
+      val by = build_num(yGen)
+      val bz = build_num(xGen * yGen)
       run(-1, s)(mul_o(bx, s, bz)) == List(by)
-    } }}
+  }
 
 }

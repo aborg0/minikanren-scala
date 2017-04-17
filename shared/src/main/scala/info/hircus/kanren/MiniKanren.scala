@@ -31,12 +31,11 @@
 
 package info.hircus.kanren
 
+import java.util
+
 import scala.language.implicitConversions
 
 object MiniKanren {
-
-  /* Type definitions */
-  import java.util.HashMap
 
   /**
    * A constraint is a list of pairs, each pair consisting of a logical variable and a list of
@@ -82,23 +81,23 @@ object MiniKanren {
       val t1 = walk(term1, this)
       val t2 = walk(term2, this)
 
-      if (t1 == t2) return Some(this)
+      if (t1 == t2) Some(this)
       else if (t1.isInstanceOf[Var])
-	return this.extend(t1.asInstanceOf[Var], t2)
+	this.extend(t1.asInstanceOf[Var], t2)
       else if (t2.isInstanceOf[Var])
-	return this.extend(t2.asInstanceOf[Var], t1)
+	this.extend(t2.asInstanceOf[Var], t1)
       else if (pairp(t1) && pairp(t2)) {
 	val ls1 = t1.asInstanceOf[(Any,Any)]
 	val ls2 = t2.asInstanceOf[(Any,Any)]
 
 	this.unify(ls1._1, ls2._1) match {
-	  case None => return None
+	  case None => None
 	  case Some(s2: Subst) =>
-	    return s2.unify(ls1._2, ls2._2)
+	    s2.unify(ls1._2, ls2._2)
 	}
       }
-      else if (t1 == t2) return Some(this)
-      else return None
+      else if (t1 == t2) Some(this)
+      else None
     }
   }
 
@@ -119,14 +118,14 @@ object MiniKanren {
    * The count makes sure that each created variable is unique.
    */
   case class Var(name: Symbol, count: Int)
-  private val m = new HashMap[Symbol, Int]()
+  private val m = new util.HashMap[Symbol, Int]()
   /**
    * Creates a logic variable, with the requested name, and a count that is automatically incremented
    *
    * @param name The name of the variable
    * @return a logic variable
    */
-  def make_var(name: Symbol) = {
+  def make_var(name: Symbol): Var = {
     val count = m.get(name)
     m.put(name, count+1)
     Var(name, count)
@@ -166,10 +165,13 @@ object MiniKanren {
 */
 
   def walk(v: Any, s: Subst): Any =
-    if (v.isInstanceOf[Var]) s.lookup(v.asInstanceOf[Var]) match {
-      case Some(x) => walk(x, s)
-      case None => v
-    } else v
+    v match {
+      case v1: Var => s.lookup(v1) match {
+        case Some(x) => walk(x, s)
+        case None => v
+      }
+      case _ => v
+    }
 
 /*
  * (define walk*
@@ -229,7 +231,7 @@ object MiniKanren {
  *   (lambda (v)
  *     (walk* v (reify-s v empty-s))))
  */    
-  def reify(v: Any) = walk_*(v, reify_s(v, empty_s))
+  def reify(v: Any): Any = walk_*(v, reify_s(v, empty_s))
 
   /* Logic system */
 
@@ -305,12 +307,12 @@ object MiniKanren {
       case Nil => succeed
       case g :: Nil => g
       case g :: gs2 =>
-	{ s: Subst => bindfn(g(s), all(gs2: _*)) }
+	s: Subst => bindfn(g(s), all(gs2: _*))
     }
   }
 
-  def all(gs: Goal*)   = all_aux(bind)(gs: _*)
-  def all_i(gs: Goal*) = all_aux(bind_i)(gs: _*)
+  def all(gs: Goal*): Goal = all_aux(bind)(gs: _*)
+  def all_i(gs: Goal*): Goal = all_aux(bind_i)(gs: _*)
 
 
   /**
@@ -375,10 +377,10 @@ object MiniKanren {
 		       cond_aux(ifer)(gs2: _*))
       } } }
 
-  def cond_e(gs: (Goal, Goal)*) = cond_aux(if_e _)(gs: _*)
-  def cond_i(gs: (Goal, Goal)*) = cond_aux(if_i _)(gs: _*)
-  def cond_a(gs: (Goal, Goal)*) = cond_aux(if_a _)(gs: _*)
-  def cond_u(gs: (Goal, Goal)*) = cond_aux(if_u _)(gs: _*)
+  def cond_e(gs: (Goal, Goal)*): Goal = cond_aux(if_e _)(gs: _*)
+  def cond_i(gs: (Goal, Goal)*): Goal = cond_aux(if_i _)(gs: _*)
+  def cond_a(gs: (Goal, Goal)*): Goal = cond_aux(if_a _)(gs: _*)
+  def cond_u(gs: (Goal, Goal)*): Goal = cond_aux(if_u _)(gs: _*)
 
   class Unifiable(a: Any) {
     def ===(b: Any): Goal = mkEqual(a, b)
@@ -425,17 +427,17 @@ object MiniKanren {
    * @param v  the variable to be inspected
    * @param g0 a goal; multiple goals might be specified
    */
-  def run(n: Int, v: Var)(g0: Goal, gs: Goal*) = run_aux(n, v, empty_s)(g0, gs: _*)
-  def crun(n: Int, v: Var)(g0: Goal, gs: Goal*) = run_aux(n, v, empty_cs)(g0, gs: _*)
-  def maprun(n: Int, v: Var)(g0: Goal, gs: Goal*) = run_aux(n, v, empty_msubst)(g0, gs: _*)
-  def cljrun(n: Int, v: Var) = run_aux(n, v, empty_cljsubst) _
+  def run(n: Int, v: Var)(g0: Goal, gs: Goal*): List[Any] = run_aux(n, v, empty_s)(g0, gs: _*)
+  def crun(n: Int, v: Var)(g0: Goal, gs: Goal*): List[Any] = run_aux(n, v, empty_cs)(g0, gs: _*)
+  def maprun(n: Int, v: Var)(g0: Goal, gs: Goal*): List[Any] = run_aux(n, v, empty_msubst)(g0, gs: _*)
+  def cljrun(n: Int, v: Var)(g0: Goal, gs: Goal*): List[Any] = run_aux(n, v, empty_cljsubst)(g0, gs: _*)
  
   private def run_aux(n: Int, v: Var, subst: Subst)(g0: Goal, gs: Goal*): List[Any] = {
     val g = gs.toList match {
       case Nil => g0
-      case gls => all((g0::gls): _*)
+      case gls => all(g0 :: gls: _*)
     }
     val allres = g(subst)  map {s: Subst => reify(walk_*(v, s)) }
-    (if (n < 0) allres else (allres take n)).toList
+    (if (n < 0) allres else allres take n).toList
   }
 }

@@ -37,8 +37,8 @@ import info.hircus.kanren.MiniKanren._
 object UnifySpecification extends Properties("Unification") {
   import Prop.forAll
 
-  val v = make_var('v)
-  val w = make_var('w)
+  private val v = make_var('v)
+  private val w = make_var('w)
 
   /* Utility function */
   def remove_right_dups[A](s: List[A]): List[A] = {

@@ -107,7 +107,7 @@ object MKMath {
    */
   def build_num(n: Int): Any = {
     if (n==0) Nil
-    else ( (n%2), build_num(n >> 1) )
+    else ( n % 2, build_num(n >> 1) )
   }
 
   /**
@@ -311,7 +311,7 @@ object MKMath {
 				       fail)))))))
   }
 
-  def odd_mul_o(x: Any, n: Any, m: Any, p: Any) = {
+  def odd_mul_o(x: Any, n: Any, m: Any, p: Any): Goal = {
     val q = make_var('q)
     all(bound_mul_o(q,p,n,m),
 	mul_o(x,m,q),

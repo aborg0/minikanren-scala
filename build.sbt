@@ -18,7 +18,7 @@ lazy val commonSettings = Seq(
   version := "0.1-SNAPSHOT",
 
   scalacOptions ++= Seq(
-    "-target:jvm-1.8",
+    //"-target:jvm-1.8", // not applicable in 2.10
     "-deprecation",
     "-encoding", "UTF-8",
     "-unchecked",
@@ -31,7 +31,7 @@ lazy val commonSettings = Seq(
     "-Xfatal-warnings",
     "-Yno-adapted-args",
     "-Ywarn-dead-code",
-    "-Ywarn-unused",
+    //"-Ywarn-unused", // not applicable in 2.10
     "-Ywarn-numeric-widen",
     "-Ywarn-value-discard",
     "-Xfuture"
