@@ -72,7 +72,7 @@ object SendMoreMoney {
 
 
   def solve_puzzle(q: Any): Goal = {
-    val all_digits = list2pair(((0 to 10).toList) map build_num)
+    val all_digits = list2pair((0 to 10).toList map build_num)
     val ten = build_num(10)
 
     def make_number(digits: Any, n: Any) = {

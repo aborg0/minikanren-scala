@@ -10,7 +10,7 @@ Please check the documentation in [docs/presentation.rst](docs/presentation) for
 
 Using REPL with SBT:
 
-    > miniKanrenJVM/console
+    > miniKanrenExamplesJVM/console
 
 ...
 
