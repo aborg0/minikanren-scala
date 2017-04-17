@@ -59,7 +59,7 @@ lazy val miniKanrenExamples = crossProject.in(file(".") / "examples").
     name := "Scala MiniKanren examples"
 
   ).jvmSettings(
-  coverageEnabled := true,
+  coverageEnabled := false,
   initialCommands := """
                        |import info.hircus.kanren.MiniKanren._
                        |import info.hircus.kanren.Prelude._

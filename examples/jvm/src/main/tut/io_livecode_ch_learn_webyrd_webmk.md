@@ -1,5 +1,6 @@
 # miniKanren: an interactive Tutorial
 
+Based on [a short interactive tutorial](http://io.livecode.ch/learn/webyrd/webmk) from [minikanren.org](http://minikanren.org/).
 
 ## Core miniKanren
 
@@ -88,47 +89,65 @@ Each of these examples returns `(3)`; in the
 rightmost example, the `y` introduced by `fresh` is
 different from the `y` introduced by `run`.
 
-<!---<p>A <code>run</code> expression can return the empty list, indicating that
-the body of the expression is logically inconsistent.</p>
+A `run` expression can return the empty list, indicating that
+the body of the expression is logically inconsistent.
 
-<div class="live" id="ex7">
-(run 1 (x) (== 4 3))</div>
-<div class="live" id="ex8">
-(run 1 (x) (== 5 x) (== 6 x))</div>
+    (run 1 (x) (== 4 3))
 
-<p>We say that a logically inconsistent relation <em>fails</em>,
-while a logically consistent relation, such as <code>(== 3 3)</code>, <em>succeeds</em>.</p>
+```tut
+run(1, make_var('x))(mkEqual(build_num(4), build_num(3)))
+```
 
-<p><code>conde</code>, which resembles <code>cond</code> syntactically, is used
-to produce multiple answers.  Logically, <code>conde</code> can be thought
+    (run 1 (x) (== 5 x) (== 6 x))
+
+```tut
+val ex8_x = make_var('x)
+run(1, x)(all(mkEqual(build_num(5), ex8_x), mkEqual(build_num(6), ex8_x)))
+```
+
+We say that a logically inconsistent relation *fails*,
+while a logically consistent relation, such as `(== 3 3)`, *succeeds*.
+
+`conde` (`cond_e` in Scala), which resembles `cond` syntactically, is used
+to produce multiple answers.  Logically, `conde` can be thought
 of as disjunctive normal form: each clause represents a disjunct, and
 is independent of the other clauses, with the relations within a
 clause acting as the conjuncts. For example, this expression produces
-two answers.</p>
+two answers.
 
-<div class="live" id="ex9">
-(run 2 (q)
-  (fresh (w x y)
-    (conde
-      ((== `(,x ,w ,x) q)
-       (== y w))
-      ((== `(,w ,x ,w) q)
-       (== y w)))))</div>
+    (run 2 (q)
+      (fresh (w x y)
+        (conde
+          ((== `(,x ,w ,x) q)
+           (== y w))
+          ((== `(,w ,x ,w) q)
+           (== y w)))))
 
-<p>Although the two <code>conde</code> lines are different, the
+```tut
+val ex9_q = make_var('q)
+val ex9_w = make_var('w)
+val ex9_x = make_var('x)
+val ex9_y = make_var('y)
+run(2, ex9_q)(cond_e(
+  (mkEqual(List(ex9_x, ex9_w, ex9_x), ex9_q), mkEqual(ex9_y, ex9_w)),
+  (mkEqual(List(ex9_w, ex9_x, ex9_w), ex9_q), mkEqual(ex9_y, ex9_w))
+))
+```
+
+Although the two `conde` lines are different, the
 values returned are identical.  This is because distinct reified
 unbound variables are assigned distinct subscripts, increasing from
 left to right&mdash;the numbering starts over again from zero within each
-answer, which is why the reified value of <code>x</code>
-is <code>_.0</code> in the
+answer, which is why the reified value of `x`
+is `_.0` in the
 first answer
-but <code>_.1</code> in the
-second.  The argument <code>2</code> in <code>run</code> denotes the
-maximum length of the resultant list.  If <code>run*</code>
+but `_.1` in the
+second.  The argument `2` in `run` denotes the
+maximum length of the resultant list.  If `run*` (`run(-1, ...)` in Scala)
 is used instead, then there is no maximum imposed.  This can easily lead to
 infinite loops.
-</p>
 
+<!---
 <div class="live" id="ex10">
 (run* (q)
   (let loop ()

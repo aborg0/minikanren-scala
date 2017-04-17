@@ -472,7 +472,6 @@ Constraints: code
     def lookup(v: Var) = s.lookup(v)
     override def constraints(v: Var) = c_lookup(v, c)
     def length: Int = s.length
-  }
 
 
 Monadic operator: mplus (Scheme)
@@ -633,7 +632,7 @@ more later.
 On the other hand, macros are harder to compose -- not first-class values.
 
 Macros: run
----------------------
+-----------
 
 ::
 
@@ -672,7 +671,7 @@ Macros: Run
     def run(n: Int, v: Var)(g0: Goal, gs: Goal*) = {
       val g = gs.toList match {
         case Nil => g0
-	case gls => all((g0::gls): _*)
+    case gls => all((g0::gls): _*)
       }
       val allres = g(empty_s)  map {s: Subst => reify(walk_*(v, s)) }
       (if (n < 0) allres else (allres take n)) toList
@@ -799,7 +798,7 @@ Common pitfalls
 
 
 Benchmarks: Petite Chez Scheme
-----------------------------------------
+------------------------------
 
 ::
 
@@ -815,7 +814,7 @@ Benchmarks: Petite Chez Scheme
 
 
 Benchmarks: Scala (association list)
-----------------------------------------------
+------------------------------------
 
 ::
 
@@ -826,7 +825,7 @@ Benchmarks: Scala (association list)
   res2: Any = List((1,(1,(1,(0,(0,(1,(1,(1,(1,(1,(0,(0,(0,(1,List()...
 
 Benchmarks: Scala (case class)
-----------------------------------------
+------------------------------
 
 ::
 
