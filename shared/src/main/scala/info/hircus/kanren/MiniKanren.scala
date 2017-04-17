@@ -38,63 +38,67 @@ import scala.language.implicitConversions
 object MiniKanren {
 
   /**
-   * A constraint is a list of pairs, each pair consisting of a logical variable and a list of
-   * variables/values it is not allowed to unify with
-   */
+    * A constraint is a list of pairs, each pair consisting of a logical variable and a list of
+    * variables/values it is not allowed to unify with
+    */
   type Constraints = List[(Var, List[Any])]
 
   /**
-   * This abstract class specifies the basic operations any substitution must satisfy.
-   */
+    * This abstract class specifies the basic operations any substitution must satisfy.
+    */
   abstract class Subst {
     /**
-     * Extend a substitution with a new mapping from v -> x. Might fail in some substitution implementations.
-     */
+      * Extend a substitution with a new mapping from v -> x. Might fail in some substitution implementations.
+      */
     def extend(v: Var, x: Any): Option[Subst]
+
     /**
-     * Add a constraint for the specified variable
-     */
+      * Add a constraint for the specified variable
+      */
     def c_extend(v: Var, x: Any): Subst = this
+
     /**
-     * Given a variable, look up its constraints
-     */
+      * Given a variable, look up its constraints
+      */
     def constraints(v: Var): List[Any] = Nil
+
     /**
-     * Given a variable, look up its bound value
-     */
+      * Given a variable, look up its bound value
+      */
     def lookup(v: Var): Option[Any]
+
     /**
-     * The length of a substitution, i.e. the number of var -> value mappings it contains
-     */
+      * The length of a substitution, i.e. the number of var -> value mappings it contains
+      */
     def length: Int
 
     /**
-     * Unifies two terms
-     * This default implementation always succeeds; substitution classes with constraints
-     * must override this, but may call this implementation once the unification is verified to be safe
-     *
-     * @param term1 Any value
-     * @param term2 Any value
-     * @return Some substitution
-     */
+      * Unifies two terms
+      * This default implementation always succeeds; substitution classes with constraints
+      * must override this, but may call this implementation once the unification is verified to be safe
+      *
+      * @param term1 Any value
+      * @param term2 Any value
+      * @return Some substitution
+      */
     def unify(term1: Any, term2: Any): Option[Subst] = {
       val t1 = walk(term1, this)
       val t2 = walk(term2, this)
 
       if (t1 == t2) Some(this)
       else if (t1.isInstanceOf[Var])
-	this.extend(t1.asInstanceOf[Var], t2)
+        this.extend(t1.asInstanceOf[Var], t2)
       else if (t2.isInstanceOf[Var])
-	this.extend(t2.asInstanceOf[Var], t1)
+        this.extend(t2.asInstanceOf[Var], t1)
       else if (pairp(t1) && pairp(t2)) {
-	val ls1 = t1.asInstanceOf[(Any,Any)]
-	val ls2 = t2.asInstanceOf[(Any,Any)]
+        val ls1 = t1.asInstanceOf[(Any, Any)]
+        val ls2 = t2.asInstanceOf[(Any, Any)]
 
-	this.unify(ls1._1, ls2._1) match {
-	  case None => None
-	  case Some(s2: Subst) =>
-	    s2.unify(ls1._2, ls2._2)
-	}
+        this.unify(ls1._1, ls2._1) match {
+          case None => None
+          case Some(s2: Subst) =>
+            s2.unify(ls1._2, ls2._2)
+        }
       }
       else if (t1 == t2) Some(this)
       else None
@@ -104,65 +108,68 @@ object MiniKanren {
   import info.hircus.kanren.Substitution._
 
   /**
-   * A goal is a function that, given a substitution, produces a stream of substitution.
-   * This stream is empty if the goal fails; otherwise, it may contain any number of
-   * substitutions
-   */
+    * A goal is a function that, given a substitution, produces a stream of substitution.
+    * This stream is empty if the goal fails; otherwise, it may contain any number of
+    * substitutions
+    */
   type Goal = (Subst) => Stream[Subst]
-  val empty_s  = EmptySubst
+  val empty_s = EmptySubst
   val empty_cs = ConstraintSubst0(Nil)
 
   /**
-   * A logic variable
-   * It consists of two parts: a user-supplied name, and a count that is automatically incremented.
-   * The count makes sure that each created variable is unique.
-   */
+    * A logic variable
+    * It consists of two parts: a user-supplied name, and a count that is automatically incremented.
+    * The count makes sure that each created variable is unique.
+    */
   case class Var(name: Symbol, count: Int)
+
   private val m = new util.HashMap[Symbol, Int]()
+
   /**
-   * Creates a logic variable, with the requested name, and a count that is automatically incremented
-   *
-   * @param name The name of the variable
-   * @return a logic variable
-   */
+    * Creates a logic variable, with the requested name, and a count that is automatically incremented
+    *
+    * @param name The name of the variable
+    * @return a logic variable
+    */
   def make_var(name: Symbol): Var = {
     val count = m.get(name)
-    m.put(name, count+1)
+    m.put(name, count + 1)
     Var(name, count)
   }
 
   /* Monads */
 
   /**
-   * A goal that always succeeds, returning a stream containing only its input substitution
-   */
+    * A goal that always succeeds, returning a stream containing only its input substitution
+    */
   def succeed: Goal = { s: Subst =>
     Stream.cons(s, Stream.empty)
   }
+
   /**
-   * A goal that always fails, returning an empty stream of substitution
-   */
+    * A goal that always fails, returning an empty stream of substitution
+    */
   def fail: Goal = { s: Subst => Stream.empty }
 
 
   def pairp(x: Any): Boolean =
-    x.isInstanceOf[(Any,Any)]
+    x.isInstanceOf[(Any, Any)]
 
-/*
- * (define walk
- *   (lambda (v s)
- *     (cond
- *       ((var? v)
- *        (cond
- *          ((assq v s) =>
- *           (lambda (a)
- *             (let ((v^ (rhs a)))
- *               (walk v^ s))))
- *          (else v)))
- *       (else v))))
- *
- * 
-*/
+  /*
+   * (define walk
+   *   (lambda (v s)
+   *     (cond
+   *       ((var? v)
+   *        (cond
+   *          ((assq v s) =>
+   *           (lambda (a)
+   *             (let ((v^ (rhs a)))
+   *               (walk v^ s))))
+   *          (else v)))
+   *       (else v))))
+   *
+   *
+  */
 
   def walk(v: Any, s: Subst): Any =
     v match {
@@ -173,64 +180,64 @@ object MiniKanren {
       case _ => v
     }
 
-/*
- * (define walk*
- *   (lambda (v s)
- *     (let ((v (walk v s)))
- *       (cond
- *         ((var? v) v)
- *         ((pair? v)
- *          (cons
- *            (walk* (car v) s)
- *            (walk* (cdr v) s)))
- *         (else v)))))
-*/
+  /*
+   * (define walk*
+   *   (lambda (v s)
+   *     (let ((v (walk v s)))
+   *       (cond
+   *         ((var? v) v)
+   *         ((pair? v)
+   *          (cons
+   *            (walk* (car v) s)
+   *            (walk* (cdr v) s)))
+   *         (else v)))))
+  */
   def walk_*(v: Any, s: Subst): Any = {
     val v1 = walk(v, s)
     if (v1.isInstanceOf[Var]) v1
     else if (pairp(v1)) {
-      val ls = v1.asInstanceOf[(Any,Any)]
+      val ls = v1.asInstanceOf[(Any, Any)]
       (walk_*(ls._1, s), walk_*(ls._2, s))
     } else v1
   }
 
-/* (define reify-s
- *   (lambda (v s)
- *     (let ((v (walk v s)))
- *       (cond
- *         ((var? v) (ext-s v (reify-name (size-s s)) s))
- *         ((pair? v) (reify-s (cdr v) (reify-s (car v) s)))
- *         (else s)))))
- *
- * (define reify-name
- *   (lambda (n)
- *     (string->symbol
- *       (string-append "_" "." (number->string n)))))
- */
+  /* (define reify-s
+   *   (lambda (v s)
+   *     (let ((v (walk v s)))
+   *       (cond
+   *         ((var? v) (ext-s v (reify-name (size-s s)) s))
+   *         ((pair? v) (reify-s (cdr v) (reify-s (car v) s)))
+   *         (else s)))))
+   *
+   * (define reify-name
+   *   (lambda (n)
+   *     (string->symbol
+   *       (string-append "_" "." (number->string n)))))
+   */
 
   def reify_name(n: Int) =
     Symbol("_." + n)
-  
-  def reify_s(v: Any, s: Subst): Subst= {
+
+  def reify_s(v: Any, s: Subst): Subst = {
     val v1 = walk(v, s)
     if (v1.isInstanceOf[Var])
       s.extend(v1.asInstanceOf[Var], reify_name(s.length)) match {
-	case Some(s1) => s1
-	/* never happens as reification does not use any constraints
-	 * but the compiler does not know that
-	 */
-	case _ => s
+        case Some(s1) => s1
+        /* never happens as reification does not use any constraints
+         * but the compiler does not know that
+         */
+        case _ => s
       }
     else if (pairp(v1)) {
-      val ls = v1.asInstanceOf[(Any,Any)]
+      val ls = v1.asInstanceOf[(Any, Any)]
       reify_s(ls._2, reify_s(ls._1, s))
     } else s
   }
 
-/* (define reify
- *   (lambda (v)
- *     (walk* v (reify-s v empty-s))))
- */    
+  /* (define reify
+   *   (lambda (v)
+   *     (walk* v (reify-s v empty-s))))
+   */
   def reify(v: Any): Any = walk_*(v, reify_s(v, empty_s))
 
   /* Logic system */
@@ -250,8 +257,8 @@ object MiniKanren {
     a_inf match {
       case Stream.Empty => a_inf
       case Stream.cons(a, f) => f match {
-	case Stream.Empty => g(a)
-	case _ => mplus_i(g(a), bind(f, g))
+        case Stream.Empty => g(a)
+        case _ => mplus_i(g(a), bind(f, g))
       }
     }
 
@@ -264,19 +271,19 @@ object MiniKanren {
    *                 (lambdaf@ () (mplus (f0) f)))))))
    */
   def mplus(a_inf: Stream[Subst],
-	    f: => Stream[Subst]): Stream[Subst] =
+            f: => Stream[Subst]): Stream[Subst] =
     a_inf append f
 
   /**
-   * Like mplus, but interleaves the two input streams
-   * Allows a goal to proceed even if the first subgoal is bottom
-   *
-   * @param a_inf a stream of substitutions
-   * @param f     a second stream of substitutions to append
-   * @return an interleaved stream of substitutions
-   */
+    * Like mplus, but interleaves the two input streams
+    * Allows a goal to proceed even if the first subgoal is bottom
+    *
+    * @param a_inf a stream of substitutions
+    * @param f     a second stream of substitutions to append
+    * @return an interleaved stream of substitutions
+    */
   def mplus_i(a_inf: Stream[Subst],
-	    f: => Stream[Subst]): Stream[Subst] = a_inf match {
+              f: => Stream[Subst]): Stream[Subst] = a_inf match {
     case Stream.Empty => f
     case Stream.cons(a, f0) => f0 match {
       case Stream.Empty => Stream.cons(a, f)
@@ -294,7 +301,8 @@ object MiniKanren {
     *          (lambdaf@ () (g2 s)))))))
     */
   def any_e(g1: Goal, g2: Goal): Goal = { s: Subst =>
-    mplus(g1(s), g2(s)) }
+    mplus(g1(s), g2(s))
+  }
 
   /* (define-syntax all
    *   (syntax-rules ()
@@ -307,19 +315,21 @@ object MiniKanren {
       case Nil => succeed
       case g :: Nil => g
       case g :: gs2 =>
-	s: Subst => bindfn(g(s), all(gs2: _*))
+        s: Subst => bindfn(g(s), all(gs2: _*))
     }
   }
 
   def all(gs: Goal*): Goal = all_aux(bind)(gs: _*)
+
   def all_i(gs: Goal*): Goal = all_aux(bind_i)(gs: _*)
 
 
   /**
-   * Faster than all, if only two goals are used
-   */
+    * Faster than all, if only two goals are used
+    */
   def both(g0: Goal, g1: Goal): Goal = { s: Subst =>
-    g0(s) flatMap g1 }
+    g0(s) flatMap g1
+  }
 
   /* (define-syntax ife
    *   (syntax-rules ()
@@ -330,60 +340,71 @@ object MiniKanren {
    */
 
   /**
-   * if_e produces a goal that, given a substitution, produces a stream of substitutions
-   * starting with the result of running a combination of the first two goals on the substitution,
-   * followed by running the alternate goal.
-   *
-   * @param testg   The first, 'test' goal. Guards the consequent
-   * @param conseqg The 'consequent' goal
-   * @param altg    The alternate goal. Call-by-name as otherwise, in a situation with many nested if_e
-   *   (e.g. using any_o), the stack overflows.
-   */
-  def if_e(testg: Goal, conseqg: =>Goal, altg: =>Goal): Goal = {
+    * if_e produces a goal that, given a substitution, produces a stream of substitutions
+    * starting with the result of running a combination of the first two goals on the substitution,
+    * followed by running the alternate goal.
+    *
+    * @param testg   The first, 'test' goal. Guards the consequent
+    * @param conseqg The 'consequent' goal
+    * @param altg    The alternate goal. Call-by-name as otherwise, in a situation with many nested if_e
+    *                (e.g. using any_o), the stack overflows.
+    */
+  def if_e(testg: Goal, conseqg: => Goal, altg: => Goal): Goal = {
     s: Subst =>
       mplus(both(testg, conseqg)(s),
-	    altg(s))
+        altg(s))
   }
 
-  def if_i(testg: Goal, conseqg: =>Goal, altg: =>Goal): Goal = {
+  def if_i(testg: Goal, conseqg: => Goal, altg: => Goal): Goal = {
     s: Subst =>
       mplus_i(both(testg, conseqg)(s),
-	    altg(s))
+        altg(s))
   }
 
-  def if_a(testg: Goal, conseqg: =>Goal, altg: =>Goal): Goal = {
+  def if_a(testg: Goal, conseqg: => Goal, altg: => Goal): Goal = {
     s: Subst => {
       val s_inf = testg(s)
       s_inf match {
-	case Stream.Empty => altg(s)
-	case Stream.cons(s_1, s_inf_1) => s_inf_1 match {
-	  case Stream.Empty => conseqg(s_1)
-	  case _ => bind(s_inf, conseqg) } }
-    } }
+        case Stream.Empty => altg(s)
+        case Stream.cons(s_1, s_inf_1) => s_inf_1 match {
+          case Stream.Empty => conseqg(s_1)
+          case _ => bind(s_inf, conseqg)
+        }
+      }
+    }
+  }
 
-  def if_u(testg: Goal, conseqg: =>Goal, altg: =>Goal): Goal = {
+  def if_u(testg: Goal, conseqg: => Goal, altg: => Goal): Goal = {
     s: Subst => {
       testg(s) match {
-	case Stream.Empty => altg(s)
-	case Stream.cons(s_1, s_inf) => conseqg(s_1) }
-    } }
+        case Stream.Empty => altg(s)
+        case Stream.cons(s_1, s_inf) => conseqg(s_1)
+      }
+    }
+  }
 
-  def cond_aux(ifer: (Goal, =>Goal, =>Goal) => Goal)(gs: (Goal,Goal)*): Goal =
-    { gs.toList match {
+  def cond_aux(ifer: (Goal, => Goal, => Goal) => Goal)(gs: (Goal, Goal)*): Goal = {
+    gs.toList match {
       case Nil => fail
       case (g0, g1) :: gs2 => gs2 match {
-	case Nil => both(g0, g1)
-	case _ => ifer(g0, g1,
-		       cond_aux(ifer)(gs2: _*))
-      } } }
+        case Nil => both(g0, g1)
+        case _ => ifer(g0, g1,
+          cond_aux(ifer)(gs2: _*))
+      }
+    }
+  }
 
   def cond_e(gs: (Goal, Goal)*): Goal = cond_aux(if_e _)(gs: _*)
+
   def cond_i(gs: (Goal, Goal)*): Goal = cond_aux(if_i _)(gs: _*)
+
   def cond_a(gs: (Goal, Goal)*): Goal = cond_aux(if_a _)(gs: _*)
+
   def cond_u(gs: (Goal, Goal)*): Goal = cond_aux(if_u _)(gs: _*)
 
   class Unifiable(a: Any) {
     def ===(b: Any): Goal = mkEqual(a, b)
+
     def =/=(b: Any): Goal = neverEqual(a, b)
   }
 
@@ -394,7 +415,8 @@ object MiniKanren {
       case Some(s2) => succeed(s2)
       case None => fail(s) // does not matter which substitution
     }
-  } }
+  }
+  }
 
   def neverEqual(t1: Any, t2: Any): Goal = { s: Subst => {
     val v1 = walk(t1, s)
@@ -402,12 +424,13 @@ object MiniKanren {
 
     if (v1 == v2) fail(s)
     else {
-      val s1 = if (v1.isInstanceOf[Var])  s.c_extend(v1.asInstanceOf[Var], v2) else s
+      val s1 = if (v1.isInstanceOf[Var]) s.c_extend(v1.asInstanceOf[Var], v2) else s
       val s2 = if (v2.isInstanceOf[Var]) s1.c_extend(v2.asInstanceOf[Var], v1) else s1
-      
+
       succeed(s2)
     }
-  } }
+  }
+  }
 
   /* (define-syntax run
    *   (syntax-rules ()
@@ -421,23 +444,26 @@ object MiniKanren {
    */
 
   /**
-   * Runs the given goals and produce up to n results for the specified variable
-   *
-   * @param n  max number of results. A negative number specifies that all available results should be returned
-   * @param v  the variable to be inspected
-   * @param g0 a goal; multiple goals might be specified
-   */
+    * Runs the given goals and produce up to n results for the specified variable
+    *
+    * @param n  max number of results. A negative number specifies that all available results should be returned
+    * @param v  the variable to be inspected
+    * @param g0 a goal; multiple goals might be specified
+    */
   def run(n: Int, v: Var)(g0: Goal, gs: Goal*): List[Any] = run_aux(n, v, empty_s)(g0, gs: _*)
+
   def crun(n: Int, v: Var)(g0: Goal, gs: Goal*): List[Any] = run_aux(n, v, empty_cs)(g0, gs: _*)
+
   def maprun(n: Int, v: Var)(g0: Goal, gs: Goal*): List[Any] = run_aux(n, v, empty_msubst)(g0, gs: _*)
+
   def cljrun(n: Int, v: Var)(g0: Goal, gs: Goal*): List[Any] = run_aux(n, v, empty_cljsubst)(g0, gs: _*)
- 
+
   private def run_aux(n: Int, v: Var, subst: Subst)(g0: Goal, gs: Goal*): List[Any] = {
     val g = gs.toList match {
       case Nil => g0
       case gls => all(g0 :: gls: _*)
     }
-    val allres = g(subst)  map {s: Subst => reify(walk_*(v, s)) }
+    val allres = g(subst) map { s: Subst => reify(walk_*(v, s)) }
     (if (n < 0) allres else allres take n).toList
   }
 }

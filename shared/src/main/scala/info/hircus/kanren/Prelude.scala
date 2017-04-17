@@ -31,159 +31,161 @@
 
 package info.hircus.kanren
 
-/***
- * The standard library for Mini Kanren.<br>
- * Currently contains all but mathematical operators, which are in
- * MKMath
- */
+/** *
+  * The standard library for Mini Kanren.<br>
+  * Currently contains all but mathematical operators, which are in
+  * MKMath
+  */
 object Prelude {
+
   import info.hircus.kanren.MiniKanren._
 
   /* Control operators */
   def once(g: Goal): Goal = {
     if_u(g, succeed,
-	 fail)
+      fail)
   }
 
   /* Lists */
 
   /**
-   * Utility function to convert a Scala linked list to a
-   * pair that is more digestible
-   *
-   * @param l a Scala list
-   * @return a list made of nested pairs
-   */
+    * Utility function to convert a Scala linked list to a
+    * pair that is more digestible
+    *
+    * @param l a Scala list
+    * @return a list made of nested pairs
+    */
   def list2pair(l: List[Any]): Any = l match {
     case Nil => Nil
     case h :: tl => (h, list2pair(tl))
   }
 
   /**
-   * Utility function to convert back from nested pairs to a Scala list
-   *
-   * @param p a list made of nested pairs, Nil-terminated
-   * @return a Scala list
-   * @todo might have to return an exception for improper lists
-   */
+    * Utility function to convert back from nested pairs to a Scala list
+    *
+    * @param p a list made of nested pairs, Nil-terminated
+    * @return a Scala list
+    * @todo might have to return an exception for improper lists
+    */
   def pair2list(p: Any): List[Any] = p match {
     case Nil => Nil
     case (h, tl) => h :: pair2list(tl)
   }
 
-  
+
   /**
-   * A relation unifying the head of the pair 'p' with 'a'
-   *
-   * @param p something pair-able
-   * @param a anything
-  */ 
+    * A relation unifying the head of the pair 'p' with 'a'
+    *
+    * @param p something pair-able
+    * @param a anything
+    */
   def car_o(p: Any, a: Any): Goal = {
     val d = make_var('d)
-    mkEqual( (a, d), p )
+    mkEqual((a, d), p)
   }
 
   /**
-   * A relation unifying the tail of the pair 'p' with 'd'
-   *
-   * @param p something pair-able
-   * @param d anything
-   */
+    * A relation unifying the tail of the pair 'p' with 'd'
+    *
+    * @param p something pair-able
+    * @param d anything
+    */
   def cdr_o(p: Any, d: Any): Goal = {
     val a = make_var('a)
-    mkEqual( (a, d), p )
+    mkEqual((a, d), p)
   }
 
   /**
-   * A relation unifying p with a fresh pair of variables
-   *
-   * @param p something pair-able
-   */
+    * A relation unifying p with a fresh pair of variables
+    *
+    * @param p something pair-able
+    */
   def pair_o(p: Any): Goal = {
     val a = make_var('a)
     val d = make_var('d)
-    mkEqual( (a, d), p )
+    mkEqual((a, d), p)
   }
 
   /**
-   * A relation that unifies 'x' with the empty list
-   *
-   * @param x something null-able
-   */
+    * A relation that unifies 'x' with the empty list
+    *
+    * @param x something null-able
+    */
   def null_o(x: Any): Goal = {
-    mkEqual( Nil, x )
+    mkEqual(Nil, x)
   }
 
   /**
-   * A relation that unifies l with a Kanren list.<br>
-   * If l is fresh, this is actually a list generator
-   *
-   * @param l something list-able
-   */
-  def list_o (l: Any): Goal =
+    * A relation that unifies l with a Kanren list.<br>
+    * If l is fresh, this is actually a list generator
+    *
+    * @param l something list-able
+    */
+  def list_o(l: Any): Goal =
     if_e(null_o(l), succeed,
-	 if_e(pair_o(l), { s: Subst =>
-           val d = make_var('d)
-	   all(cdr_o(l, d),
-               list_o(d))(s) },
-	      fail))
+      if_e(pair_o(l), { s: Subst =>
+        val d = make_var('d)
+        all(cdr_o(l, d),
+          list_o(d))(s)
+      },
+        fail))
 
 
   /**
-   * A relation that holds if l3 is unifiable with the append of l1 and l2
-   *
-   * @param l1 a Kanren list
-   * @param l2 a Kanren list
-   * @param l3 a Kanren list
-   */
+    * A relation that holds if l3 is unifiable with the append of l1 and l2
+    *
+    * @param l1 a Kanren list
+    * @param l2 a Kanren list
+    * @param l3 a Kanren list
+    */
   def append_o(l1: Any, l2: Any, l3: Any): Goal =
-    if_i(null_o(l1), l2 === l3,
-	 { s: Subst => {
-	   val x = make_var('x)
-	   val l11 = make_var('l11)
-	   val l31 = make_var('l31)
+    if_i(null_o(l1), l2 === l3, { s: Subst => {
+      val x = make_var('x)
+      val l11 = make_var('l11)
+      val l31 = make_var('l31)
 
-	   all(l1 === ((x, l11)),
-	       l3 === ((x, l31)),
-	       append_o(l11, l2, l31))(s) } })
+      all(l1 === ((x, l11)),
+        l3 === ((x, l31)),
+        append_o(l11, l2, l31))(s)
+    }
+    })
 
   /**
-   * A relation that unifies 'x' with an element from 'l'.<br>
-   * If x is fresh, collecting all results  yield all the elements of l<br>
-   * If 'l' is fresh, generates all possible lists containing 'x'<br>
-   * Otherwise, the only possible result is if 'x' matches an element in 'l'
-   *
-   * @param x any
-   * @param l something list-able
-   */
+    * A relation that unifies 'x' with an element from 'l'.<br>
+    * If x is fresh, collecting all results  yield all the elements of l<br>
+    * If 'l' is fresh, generates all possible lists containing 'x'<br>
+    * Otherwise, the only possible result is if 'x' matches an element in 'l'
+    *
+    * @param x any
+    * @param l something list-able
+    */
   def member_o(x: Any, l: Any): Goal =
     if_e(null_o(l), fail,
-         if_e(car_o(l, x), succeed,
-	      {s: Subst =>
-		val d = make_var('d)
-                all(cdr_o(l, d),
-                member_o(x, d))(s)
-               } ))
+      if_e(car_o(l, x), succeed, { s: Subst =>
+        val d = make_var('d)
+        all(cdr_o(l, d),
+          member_o(x, d))(s)
+      }))
 
   /**
-   * see page 77 of Reasoned Schemer
-   *
-   * @param g a Goal
-   * @return a goal that succeeds if 'g' succeeds, and otherwise has
-   *         no value (bottom)
-   */
+    * see page 77 of Reasoned Schemer
+    *
+    * @param g a Goal
+    * @return a goal that succeeds if 'g' succeeds, and otherwise has
+    *         no value (bottom)
+    */
   def any_o(g: Goal): Goal = if_e(g, succeed, any_o(g))
 
   /**
-   * Bottom: this is a goal that never terminates if evaluated<br>
-   * see page 77 of Reasoned Schemer
-   */
+    * Bottom: this is a goal that never terminates if evaluated<br>
+    * see page 77 of Reasoned Schemer
+    */
   def never_o: Goal = any_o(fail)
 
   /**
-   * Always: a goal that can succeed an infinite number of times<br>
-   * see page 77-78 of Reasoned Schemer
-   */
+    * Always: a goal that can succeed an infinite number of times<br>
+    * see page 77-78 of Reasoned Schemer
+    */
   def always_o: Goal = any_o(succeed)
 
 }

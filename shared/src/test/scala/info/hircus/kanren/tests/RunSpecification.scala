@@ -36,11 +36,12 @@ import info.hircus.kanren.MiniKanren._
 import info.hircus.kanren.Prelude._
 
 object RunSpecification extends Properties("Run") {
+
   import Prop.forAll
 
   private val v = make_var('v)
   private val w = make_var('w)
-  
+
   property("==") = forAll { n: Int =>
     run(1, v)(v === n) == List(n)
   }
@@ -57,13 +58,15 @@ object RunSpecification extends Properties("Run") {
   }
 
   property("all-any") = forAll { (m: Int, n: Int) =>
-    m==n ||
-    (run(-1, v)(all(v === n, any_e(v === m, v === n)))
-     == List(n)) }
+    m == n ||
+      (run(-1, v)(all(v === n, any_e(v === m, v === n)))
+        == List(n))
+  }
 
   property("ife") = forAll { (m: Int, n: Int) =>
     run(-1, v)(if_e(v === m, succeed,
-		    v === n)) == List(m, n) }
+      v === n)) == List(m, n)
+  }
 
   property("null") = forAll { n: Int =>
     val x = make_var('x)
@@ -73,12 +76,12 @@ object RunSpecification extends Properties("Run") {
 
   property("car") = forAll { (m: Int, n: Int) =>
     val x = make_var('x)
-    run(-1, x)(car_o( (m, n), x )) == List(m) 
+    run(-1, x)(car_o((m, n), x)) == List(m)
   }
 
   property("cdr") = forAll { (m: Int, n: Int) =>
     val x = make_var('x)
-    run(-1, x)(cdr_o( (m, n), x )) == List(n) 
+    run(-1, x)(cdr_o((m, n), x)) == List(n)
   }
 
   property("listgen") = forAll { n: Int =>
@@ -92,7 +95,9 @@ object RunSpecification extends Properties("Run") {
 
   property("member0") = run(-1, v)(member_o(v, Nil)) == Nil
   property("member1") = forAll { n: Int =>
-    run(-1, v)(member_o(v, (n,Nil))) == List(n) }
+    run(-1, v)(member_o(v, (n, Nil))) == List(n)
+  }
   property("member*") = forAll { (n: Int, ls: List[Int]) =>
-    run(-1, v)(member_o(v, list2pair(n::ls))) == n::ls }
+    run(-1, v)(member_o(v, list2pair(n :: ls))) == n :: ls
+  }
 }

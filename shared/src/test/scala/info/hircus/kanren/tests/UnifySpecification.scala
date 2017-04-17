@@ -35,6 +35,7 @@ import org.scalacheck._
 import info.hircus.kanren.MiniKanren._
 
 object UnifySpecification extends Properties("Unification") {
+
   import Prop.forAll
 
   private val v = make_var('v)
@@ -43,7 +44,9 @@ object UnifySpecification extends Properties("Unification") {
   /* Utility function */
   def remove_right_dups[A](s: List[A]): List[A] = {
     if (s.isEmpty) s
-    else s.head :: remove_right_dups(s.tail.filterNot({_ == s.head}))
+    else s.head :: remove_right_dups(s.tail.filterNot({
+      _ == s.head
+    }))
   }
 
   property("bindonce") = forAll { n: Int =>
@@ -51,12 +54,12 @@ object UnifySpecification extends Properties("Unification") {
     (for {
       s <- empty_s.unify(v, n)
       res <- s.lookup(v)
-    } yield res)  match {
+    } yield res) match {
       case Some(x) => x == n
       case None => false
     }
   }
-  
+
   property("bindtwice") = forAll { (vstr: String, m: Int, n: Int) =>
     val v = make_var(Symbol(vstr))
     (for {
@@ -64,23 +67,26 @@ object UnifySpecification extends Properties("Unification") {
       s2 <- s1.unify(v, n)
       res <- s2.lookup(v)
     } yield res) match {
-      case Some(_) => m==n
+      case Some(_) => m == n
       case None => true
     }
   }
 
-  property("pairs") = forAll { (m:Int, n: Int) =>
+  property("pairs") = forAll { (m: Int, n: Int) =>
     def pairGoal: Goal =
       (v, w) === ((m, n))
-    
+
     run(-1, v)(pairGoal) == List(m) &&
-    run(-1, w)(pairGoal) == List(n) }
+      run(-1, w)(pairGoal) == List(n)
+  }
 
-  property("=/= #1") = forAll { n:Int =>
-    crun(-1, v)(v =/= n, v === n) == Nil }
+  property("=/= #1") = forAll { n: Int =>
+    crun(-1, v)(v =/= n, v === n) == Nil
+  }
 
-  property("=/= #2") = forAll { n:Int =>
-    crun(-1, v)(v =/= n, w === n, v === w) == Nil }
+  property("=/= #2") = forAll { n: Int =>
+    crun(-1, v)(v =/= n, w === n, v === w) == Nil
+  }
 
 }
 

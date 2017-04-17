@@ -36,60 +36,63 @@ import info.hircus.kanren.MiniKanren._
 object Substitution {
 
   /**
-   * An empty simple substitution
-   */
+    * An empty simple substitution
+    */
   object EmptySubst extends Subst {
     /**
-     * Extending an empty substitution always succeeds, producing a simple substitution
-     * with one binding, v -> x
-     *
-     * @param v a logical variable
-     * @param x a value to bind x to
-     */
-    override def extend(v: Var, x: Any) = Some(SimpleSubst(v,x,this))
+      * Extending an empty substitution always succeeds, producing a simple substitution
+      * with one binding, v -> x
+      *
+      * @param v a logical variable
+      * @param x a value to bind x to
+      */
+    override def extend(v: Var, x: Any) = Some(SimpleSubst(v, x, this))
+
     /**
-     * Looking up in an empty substitution always fails
-     *
-     * @param v a logical variable
-     */
+      * Looking up in an empty substitution always fails
+      *
+      * @param v a logical variable
+      */
     override def lookup(v: Var) = None
+
     /**
-     * The length of an empty substitution is zero
-     */
+      * The length of an empty substitution is zero
+      */
     override def length: Int = 0
   }
 
   /**
-   * A non-empty simple substitution
-   */
+    * A non-empty simple substitution
+    */
   case class SimpleSubst(v: Var, x: Any, s: Subst) extends Subst {
     /**
-     * Extending a simple substitution always succeeds, producing a new substitution
-     * linked with the current one
-     *
-     * @param v a logical variable
-     * @param x a value to bind to x
-     */
-    override def extend(v: Var, x: Any) = Some(SimpleSubst(v,x,this))
+      * Extending a simple substitution always succeeds, producing a new substitution
+      * linked with the current one
+      *
+      * @param v a logical variable
+      * @param x a value to bind to x
+      */
+    override def extend(v: Var, x: Any) = Some(SimpleSubst(v, x, this))
+
     /**
-     * Looking up a variable succeeds immediately if it is at the head of the substitution.
-     * Otherwise, the linked substitution is queried.
-     *
-     * @param v a logical variable
-     */
+      * Looking up a variable succeeds immediately if it is at the head of the substitution.
+      * Otherwise, the linked substitution is queried.
+      *
+      * @param v a logical variable
+      */
     override def lookup(v: Var): Option[Any] = if (this.v == v) Some(x) else s.lookup(v)
 
     /**
-     * The length of a non-empty substitution is one more than its linked substitution
-     */
+      * The length of a non-empty substitution is one more than its linked substitution
+      */
     override def length: Int = 1 + s.length
   }
 
   abstract class ConstraintSubst extends Subst {
     /**
-     * In a constrained substitution, two walked terms are only unifiable if neither are listed in
-     * the other's constraints
-     */
+      * In a constrained substitution, two walked terms are only unifiable if neither are listed in
+      * the other's constraints
+      */
     override def unify(term1: Any, term2: Any): Option[Subst] = {
       val v1 = walk(term1, this)
       val v2 = walk(term2, this)
@@ -102,104 +105,110 @@ object Substitution {
 
   private def c_lookup(v: Var, c: Constraints): List[Any] = c match {
     case Nil => Nil
-    case (w, cls) :: c2 => if (v==w) cls else c_lookup(v, c2)
+    case (w, cls) :: c2 => if (v == w) cls else c_lookup(v, c2)
   }
 
   private def c_insert(v: Var, x: Any, c: Constraints): Constraints = c match {
     case Nil => List((v, List(x)))
-    case (w, cls) :: c2 => if (v==w) (w, if (cls contains x) cls
+    case (w, cls) :: c2 => if (v == w) (w, if (cls contains x) cls
     else x :: cls) :: c2
-			   else (w,cls) :: c_insert(v,x,c2)
+    else (w, cls) :: c_insert(v, x, c2)
   }
 
 
   case class ConstraintSubst0(c: Constraints) extends Subst {
     /**
-     * extending a constraint substitution creates a new constraint substitution
-     * with the extension done in the simple substitution part
-     */
+      * extending a constraint substitution creates a new constraint substitution
+      * with the extension done in the simple substitution part
+      */
     override def extend(v: Var, x: Any): Option[ConstraintSubstN] =
       if (this.constraints(v) contains x) None
-      else Some(ConstraintSubstN(SimpleSubst(v,x,this), c))
+      else Some(ConstraintSubstN(SimpleSubst(v, x, this), c))
 
-    override def c_extend(v: Var, x: Any) = ConstraintSubst0(c_insert(v,x,c))
+    override def c_extend(v: Var, x: Any) = ConstraintSubst0(c_insert(v, x, c))
 
     /**
-     * Looking up a variable in an empty constraint substitution always returns None
-     *
-     * @param v a logical variable
-     * @return None
-     */
+      * Looking up a variable in an empty constraint substitution always returns None
+      *
+      * @param v a logical variable
+      * @return None
+      */
     override def lookup(v: Var) = None
+
     override def constraints(v: Var): List[Any] = c_lookup(v, c)
+
     /**
-     * The length of an empty constraint substitution is zero
-     */
+      * The length of an empty constraint substitution is zero
+      */
     override def length: Int = 0
   }
 
   case class ConstraintSubstN(s: SimpleSubst, c: Constraints) extends Subst {
     /**
-     * Constraint checking is performed here, since it is not needed with
-     * simple substitutions. Doing it in unify would be less efficient
-     */
+      * Constraint checking is performed here, since it is not needed with
+      * simple substitutions. Doing it in unify would be less efficient
+      */
     override def extend(v: Var, x: Any): Option[ConstraintSubstN] =
       if (this.constraints(v) contains x) None
-      else Some(ConstraintSubstN(SimpleSubst(v,x,s), c))
-  
-    override def c_extend(v: Var, x: Any) = ConstraintSubstN(s, c_insert(v,x,c))
+      else Some(ConstraintSubstN(SimpleSubst(v, x, s), c))
+
+    override def c_extend(v: Var, x: Any) = ConstraintSubstN(s, c_insert(v, x, c))
 
     /**
-     * Looking up a variable in a constraint substitution looks it up in the
-     * simple substitution
-     *
-     * @param v a logical variable
-     */
+      * Looking up a variable in a constraint substitution looks it up in the
+      * simple substitution
+      *
+      * @param v a logical variable
+      */
     override def lookup(v: Var): Option[Any] = s.lookup(v)
+
     override def constraints(v: Var): List[Any] = c_lookup(v, c)
+
     /**
-     * The length of a constraining substitution is the length of its simple substitution
-     */
+      * The length of a constraining substitution is the length of its simple substitution
+      */
     override def length: Int = s.length
   }
 
   /**
-   * <p>Uses an immutable map to store the substitution.<br>
-   * If the computation is lookup-heavy, this should be faster.</p>
-   *
-   * <p>Not used by default as memory consumption is heavy -- palprod_o
-   * causes heap OOM exception.</p>
-   */
+    * <p>Uses an immutable map to store the substitution.<br>
+    * If the computation is lookup-heavy, this should be faster.</p>
+    *
+    * <p>Not used by default as memory consumption is heavy -- palprod_o
+    * causes heap OOM exception.</p>
+    */
   case class MSubst(m: Map[Var, Any]) extends Subst {
     override def extend(v: Var, x: Any) = Some(MSubst(m + (v -> x)))
+
     override def lookup(v: Var): Option[Any] = m.get(v)
+
     override def length: Int = m.size
   }
 
   val empty_msubst = MSubst(Map())
 
-//  import clojure.lang.IPersistentMap
-//  import clojure.lang.PersistentHashMap
-//
-//  /**
-//   * A substitution based on Clojure's PersistentHashMap
-//   * (earlier based on Odersky's colleague's work at EPFL!)
-//   *
-//   * Requires a modified Clojure, because right now the
-//   * MapEntry interface exposes a val() getter which clashes
-//   * with the Scala keyword
-//   */
-//  case class CljSubst(m: IPersistentMap) extends Subst {
-//    def extend(v: Var, x: Any) = Some(CljSubst(m.assoc(v, x)))
-//    def lookup(v: Var) = {
-//      val res = m.entryAt(v)
-//      if (res != null) Some(res.`val`)
-//      else None
-//    }
-//    def length = m.count
-//  }
-//
-//  val empty_cljsubst = CljSubst(PersistentHashMap.EMPTY)
+  //  import clojure.lang.IPersistentMap
+  //  import clojure.lang.PersistentHashMap
+  //
+  //  /**
+  //   * A substitution based on Clojure's PersistentHashMap
+  //   * (earlier based on Odersky's colleague's work at EPFL!)
+  //   *
+  //   * Requires a modified Clojure, because right now the
+  //   * MapEntry interface exposes a val() getter which clashes
+  //   * with the Scala keyword
+  //   */
+  //  case class CljSubst(m: IPersistentMap) extends Subst {
+  //    def extend(v: Var, x: Any) = Some(CljSubst(m.assoc(v, x)))
+  //    def lookup(v: Var) = {
+  //      val res = m.entryAt(v)
+  //      if (res != null) Some(res.`val`)
+  //      else None
+  //    }
+  //    def length = m.count
+  //  }
+  //
+  //  val empty_cljsubst = CljSubst(PersistentHashMap.EMPTY)
   import scala.collection.immutable.Map
 
   /**
@@ -209,7 +218,9 @@ object Substitution {
     override def lookup(v: Var): Option[Any] = {
       m.get(v)
     }
+
     override def extend(v: Var, x: Any): Option[Substitution.CljSubst] = Some(CljSubst(m + (v -> x)))
+
     override def length: Int = m.size
   }
 
