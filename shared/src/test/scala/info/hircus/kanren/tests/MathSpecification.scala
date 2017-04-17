@@ -47,11 +47,11 @@ object MathSpecification extends Properties("Math") {
     m <- Gen.choose(min, max)
   } yield (n,m)
 
-  private def tripleGen(min: Int, max: Int) = for {
-    x <- Gen.choose(min, max)
-    y <- Gen.choose(min, max)
-    z <- Gen.choose(min, max)
-  } yield (x,y,z)
+//  private def tripleGen(min: Int, max: Int) = for {
+//    x <- Gen.choose(min, max)
+//    y <- Gen.choose(min, max)
+//    z <- Gen.choose(min, max)
+//  } yield (x,y,z)
 
   val b = make_var('b)
   val x = make_var('x)
@@ -66,7 +66,7 @@ object MathSpecification extends Properties("Math") {
   property("bit-and-o 1") = run(-1, s)(both(bit_and_o(x,y,1), (x,y) === s)) == List((1,1))
 
   property("digit-o") = {
-    ((run(-1, x)(digit_o(x))) map read_num _) == ((0 until 10) toList)
+    ((run(-1, x)(digit_o(x))) map read_num _) == ((0 until 10).toList)
   }
 
   private def floor_log2(n: Double) = {
@@ -83,8 +83,8 @@ object MathSpecification extends Properties("Math") {
 
   property("<lo") = forAll(pairGen(0, 20)) { p => p match {
     case (n,m) => {
-      val x = (Math.exp(n) toInt)
-      val y = (Math.exp(m) toInt)
+      val x = (Math.exp(n).toInt)
+      val y = (Math.exp(m).toInt)
       (floor_log2(x) < floor_log2(y) ==
 	(run(-1, s)(lt_len_o(build_num(x),
 			     build_num(y))) != Nil) ) }
@@ -138,12 +138,12 @@ object MathSpecification extends Properties("Math") {
     read_num(build_num(n)) == n }
 
   property("add_o") = forAll(pairGen(MIN_INT, MAX_INT)) { p =>
-    run(-1, s)(add_o(build_num(p _1),
-                     build_num(p _2),
+    run(-1, s)(add_o(build_num(p._1),
+                     build_num(p._2),
                      s)) == List(build_num(p._1+p._2)) }
 
   property("sub_o") = forAll(pairGen(MIN_INT, MAX_INT)) { p =>
-    run(-1, s)(sub_o(build_num(p _1),
+    run(-1, s)(sub_o(build_num(p._1),
                      build_num(p._1+p._2+1),
                      s)) == Nil }
 

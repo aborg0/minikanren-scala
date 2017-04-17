@@ -94,7 +94,7 @@ object PalProd {
 		       if_e(eq_len_o(k, build_num(64)), lt_o(k, build_num(91)),
 			    fail)))),
 	once({ s: Subst => {
-	  val the_sum = walk_*(sum, s)
+	  val _/*the_sum*/ = walk_*(sum, s)
 	  val xyz = make_var('xyz)
 	  all(lt_len_o(xyz, build_num(1024)),
 	      lt_len_o(build_num(32), xyz),

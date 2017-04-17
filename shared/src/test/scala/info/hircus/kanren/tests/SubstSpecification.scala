@@ -65,7 +65,7 @@ object SubstSpecification extends Properties("Substitution") {
 			   reify_s(pvars._1, empty_s))) &&
      unique_vars.length == s.length &&
      pair2list(walk_*(list2pair(unique_vars), s)) ==
-       ((0 until s.length) map { reify_name(_) } toList) )
+       (((0 until s.length) map { reify_name(_) }).toList) )
   }
   
 }

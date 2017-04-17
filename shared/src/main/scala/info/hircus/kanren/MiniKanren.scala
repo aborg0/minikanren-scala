@@ -31,6 +31,8 @@
 
 package info.hircus.kanren
 
+import scala.language.implicitConversions
+
 object MiniKanren {
 
   /* Type definitions */
@@ -383,7 +385,7 @@ object MiniKanren {
     def =/=(b: Any): Goal = neverEqual(a, b)
   }
 
-  implicit def unifiable(a: Any) = new Unifiable(a)
+  implicit def unifiable(a: Any): Unifiable = new Unifiable(a)
 
   def mkEqual(t1: Any, t2: Any): Goal = { s: Subst => {
     s.unify(t1, t2) match {
@@ -434,6 +436,6 @@ object MiniKanren {
       case gls => all((g0::gls): _*)
     }
     val allres = g(subst)  map {s: Subst => reify(walk_*(v, s)) }
-    (if (n < 0) allres else (allres take n)) toList
+    (if (n < 0) allres else (allres take n)).toList
   }
 }

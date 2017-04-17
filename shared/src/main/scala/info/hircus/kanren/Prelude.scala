@@ -143,8 +143,8 @@ object Prelude {
 	   val l11 = make_var('l11)
 	   val l31 = make_var('l31)
 
-	   all(l1 === (x, l11),
-	       l3 === (x, l31),
+	   all(l1 === ((x, l11)),
+	       l3 === ((x, l31)),
 	       append_o(l11, l2, l31))(s) } })
 
   /**

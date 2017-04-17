@@ -45,24 +45,24 @@ object BranchingSpecification extends Properties("Branching") {
 
   property("always-first") =
     run(5, v)(all(always_o, true === v)) == (
-      (for { x <- 0 until 5 } yield true) toList )
+      (for { x <- 0 until 5 } yield true).toList )
 
   property("always-second") =
     run(5, v)(all(true === v, always_o)) == (
-      (for { x <- 0 until 5 } yield true) toList )
+      (for { x <- 0 until 5 } yield true).toList )
 
     
   property("cond_i #1") =
     run(5, v)(both(if_i(false === v, always_o,
 			if_i(true === v, always_o,
 			     fail)),
-		   true === v)) == ( (for { x <- 0 until 5 } yield true) toList )
+		   true === v)) == ( (for { x <- 0 until 5 } yield true).toList )
 
   property("cond_i #2") =
     run(5, v)(both(all_i(if_e(false === v, succeed,
 			      true === v),
 			 always_o),
 		   true === v)) == (
-		     (for { x <- 0 until 5 } yield true) toList )
+		     (for { x <- 0 until 5 } yield true).toList )
 
 }

@@ -21,6 +21,7 @@ lazy val miniKanren = crossProject.in(file(".")).
     libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.13.4" % "test",
 
     scalacOptions ++= Seq(
+      "-target:jvm-1.8",
       "-deprecation",
       "-encoding", "UTF-8",
       "-unchecked",
@@ -30,13 +31,15 @@ lazy val miniKanren = crossProject.in(file(".")).
       //"-language:higherKinds",
       //"-language:reflectiveCalls",
       "-Xlint",
-      //  "-Xfatal-warnings",
-      //"-Yno-adapted-args",
+      "-Xfatal-warnings",
+      "-Yno-adapted-args",
       "-Ywarn-dead-code",
+      "-Ywarn-unused",
       "-Ywarn-numeric-widen",
       "-Ywarn-value-discard",
       "-Xfuture"
-    )
+    ),
+    scalacOptions in Test -= "-Ywarn-numeric-widen"
 
   ).jvmSettings(
     coverageEnabled := true,

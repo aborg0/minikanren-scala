@@ -55,9 +55,9 @@ object SendMoreMoney {
 	   val l1s = make_var('l1s)
 	   val l2s = make_var('l2s)
 
-	   all(l  === (x, ls),
-	       l1 === (x, l1s),
-	       l2 === (x, l2s),
+	   all(l  === ((x, ls)),
+	       l1 === ((x, l1s)),
+	       l2 === ((x, l2s)),
 	       common_prefix_o(ls, l1s, l2s))(s) } })
   }
 
@@ -72,7 +72,7 @@ object SendMoreMoney {
 
 
   def solve_puzzle(q: Any): Goal = {
-    val all_digits = list2pair(((0 to 10) toList) map build_num)
+    val all_digits = list2pair(((0 to 10).toList) map build_num)
     val ten = build_num(10)
 
     def make_number(digits: Any, n: Any) = {
@@ -84,7 +84,7 @@ object SendMoreMoney {
 	       val acc1 = make_var('acc1)
 	       val acc2 = make_var('acc2)
 
-	       all_i(digits === (d, rest),
+	       all_i(digits === ((d, rest)),
 		     mul_o(acc, ten, acc1),
 		     add_o(acc1, d, acc2),
 		     loop(rest, acc2))(s) } } )
@@ -101,7 +101,7 @@ object SendMoreMoney {
 	     val rest = make_var('rest)
 	     val set1 = make_var('set1)
 	     
-	     all_i(digits === (d, rest),
+	     all_i(digits === ((d, rest)),
 		   reme(d, all_digits, set1),
 		   choose_digits(rest, set1, remained_digits))(s) } })
     }
@@ -115,11 +115,11 @@ object SendMoreMoney {
       val dr  = make_var('dr)
 
       all(if_e(ci === Nil, succeed,
-	       ci === (1,Nil)),
+	       ci === ((1,Nil))),
 	  add_o(ci, d1, d11),
 	  add_o(d11, d2, dr),
 	  if_e(dr === d_o, co === Nil,
-	       if_e(add_o(d_o, ten, dr), co === (1,Nil),
+	       if_e(add_o(d_o, ten, dr), co === ((1,Nil)),
 		    fail)))
     }
 
