@@ -32,3 +32,5 @@ script:
     sbt coverageAggregate
 after_success:
   - sbt coveralls
+
+sbt_args: -J-Xss2m

@@ -1,8 +1,8 @@
 enablePlugins(ScalaJSPlugin)
 
 name := "Scala MiniKanren root project"
-crossScalaVersions := Seq("2.10.6", "2.11.8", "2.12.1")
-scalaVersion in ThisBuild := "2.12.1" // or any other Scala version >= 2.10.2 for Scala.js
+crossScalaVersions := Seq("2.10.6", "2.11.11", "2.12.2")
+scalaVersion in ThisBuild := "2.12.2" // or any other Scala version >= 2.10.2 for Scala.js
 
 // This is an application with a main method
 scalaJSUseMainModuleInitializer := true
@@ -47,8 +47,8 @@ lazy val miniKanren = crossProject.in(file(".")).
     name := "Scala MiniKanren",
     libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.13.4" % "test"
   ).jvmSettings(
-    coverageEnabled := true,
-    fork in Test := true/*,
+    coverageEnabled := true/*,
+    fork in Test := true,
     javaOptions in Test += "-Xss1M"*/
   ).jsSettings(
     coverageEnabled := false
