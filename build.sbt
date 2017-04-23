@@ -1,6 +1,6 @@
 enablePlugins(ScalaJSPlugin)
 
-name := "Scala MiniKanren root project"
+name := "Scala miniKanren root project"
 crossScalaVersions := Seq("2.10.6", "2.11.11", "2.12.2")
 scalaVersion in ThisBuild := "2.12.2" // or any other Scala version >= 2.10.2 for Scala.js
 
@@ -44,7 +44,7 @@ lazy val commonSettings = Seq(
 lazy val miniKanren = crossProject.in(file(".")).
   settings(
     commonSettings,
-    name := "Scala MiniKanren",
+    name := "Scala miniKanren",
     libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.13.4" % "test"
   ).jvmSettings(
     coverageEnabled := true/*,
@@ -58,7 +58,7 @@ lazy val miniKanrenExamples = crossProject.in(file(".") / "examples").
   dependsOn(miniKanren).
   settings(
     commonSettings,
-    name := "Scala MiniKanren examples"
+    name := "Scala miniKanren examples"
 
   ).jvmSettings(
   coverageEnabled := false,

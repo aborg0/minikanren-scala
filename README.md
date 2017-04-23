@@ -8,6 +8,12 @@ Based on https://github.com/michel-slm/minikanren-scala
 
 Please check the documentation in [docs/presentation.rst](docs/presentation) for details.
 
+You can also check the (basic) tutorial of miniKanren with this Scala syntax, using the following command (in the root project's sbt shell):
+
+    > miniKanrenExamplesJVM/tut
+
+snd check the output markdown file in `examples/jvm/target/scala-2.12/tut`
+
 Using REPL with SBT:
 
     > miniKanrenExamplesJVM/console
