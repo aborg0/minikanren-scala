@@ -31,10 +31,14 @@
 
 package info.hircus.kanren
 
+import scala.scalajs.js.annotation.{JSExportAll, JSExportTopLevel}
+
 /**
   * Mini Kanren math relations.<br>
   * This will be merged with Prelude once all operations are implemented
   */
+@JSExportTopLevel("miniKanrenMath")
+@JSExportAll
 object MKMath {
 
   import info.hircus.kanren.MiniKanren._

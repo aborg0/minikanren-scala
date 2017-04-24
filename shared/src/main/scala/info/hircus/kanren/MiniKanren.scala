@@ -34,7 +34,10 @@ package info.hircus.kanren
 import java.util
 
 import scala.language.implicitConversions
+import scala.scalajs.js.annotation.{JSExportAll, JSExportTopLevel}
 
+@JSExportTopLevel("miniKanren")
+@JSExportAll
 object MiniKanren {
 
   /**
@@ -46,6 +49,7 @@ object MiniKanren {
   /**
     * This abstract class specifies the basic operations any substitution must satisfy.
     */
+  @JSExportAll
   abstract class Subst {
     /**
       * Extend a substitution with a new mapping from v -> x. Might fail in some substitution implementations.

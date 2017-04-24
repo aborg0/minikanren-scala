@@ -33,6 +33,10 @@ package info.hircus.kanren
 
 import info.hircus.kanren.MiniKanren._
 
+import scala.scalajs.js.annotation.{JSExportAll, JSExportTopLevel}
+
+@JSExportTopLevel("Substitution")
+@JSExportAll
 object Substitution {
 
   /**

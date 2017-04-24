@@ -31,11 +31,15 @@
 
 package info.hircus.kanren
 
+import scala.scalajs.js.annotation.{JSExportAll, JSExportTopLevel}
+
 /** *
   * The standard library for Mini Kanren.<br>
   * Currently contains all but mathematical operators, which are in
   * MKMath
   */
+@JSExportTopLevel("miniKanrenPrelude")
+@JSExportAll
 object Prelude {
 
   import info.hircus.kanren.MiniKanren._
