@@ -111,7 +111,7 @@ object SendMoreMoney {
       })
     }
 
-    /**
+     /*
       * d1 + d2 + ci = do + 10*co
       * c1 and co can only be either 0 or 1
       */
