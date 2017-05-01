@@ -28,7 +28,7 @@ lazy val commonSettings = Seq(
     //"-language:higherKinds",
     //"-language:reflectiveCalls",
     "-Xlint",
-    "-Xfatal-warnings",
+    //"-Xfatal-warnings",
     "-Yno-adapted-args",
     "-Ywarn-dead-code",
     //"-Ywarn-unused", // not applicable in 2.10
@@ -51,7 +51,8 @@ lazy val miniKanren = crossProject.in(file(".")).
     coverageEnabled := true/*,
     fork in Test := true,
     javaOptions in Test += "-Xss11m",
-    javaOptions in Test += "-Xmx3g"*/
+    javaOptions in Test += "-Xmx3g"*/,
+    scalacOptions += "-Xfatal-warnings"
   ).jsSettings(
     coverageEnabled := false
   )
