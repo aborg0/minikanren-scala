@@ -93,11 +93,10 @@ lazy val miniKanrenExamples = crossProject.in(file(".") / "examples").
                        |  println("Elapsed times: " + res)
                        |  println("Avg: " + (res.foldLeft(zero)(adder) / n))
                        |}
-                       |""".stripMargin,
-  tutSettings
+                       |""".stripMargin
 ).jsSettings(
   coverageEnabled := false
-)
+).enablePlugins(TutPlugin)
 
 lazy val miniKanrenJVM = miniKanren.jvm
 
