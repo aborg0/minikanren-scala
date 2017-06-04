@@ -13,9 +13,9 @@ resolvers += Resolver.url(
   url("https://dl.bintray.com/content/tpolecat/sbt-plugins"))(
   Resolver.ivyStylePatterns)
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.16")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.17")
 
-addSbtPlugin("org.tpolecat" % "tut-plugin" % "0.4.8")
+addSbtPlugin("org.tpolecat" % "tut-plugin" % "0.5.2")
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.0")
 
