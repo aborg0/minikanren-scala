@@ -18,8 +18,8 @@ jdk:
   - oraclejdk8
   - oraclejdk9
 scala:
-  - 2.10.6
-  - 2.11.11
+  - 2.10.7
+  - 2.11.12
   - 2.12.4
 notifications:
   email: false
@@ -29,7 +29,7 @@ notifications:
 #    on_failure: always  # options: [always|never|change] default: always
 #    on_start: false     # default: false
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean doc coverage test miniKanrenExamplesJVM/tut coverageReport &&
-    sbt coverageAggregate
+  - sbt -Dsbt.scala.version=2.10.7 ++$TRAVIS_SCALA_VERSION clean doc coverage test miniKanrenExamplesJVM/tut coverageReport &&
+    sbt -Dsbt.scala.version=2.10.7 coverageAggregate
 after_success:
-  - sbt coveralls
+  - sbt -Dsbt.scala.version=2.10.7 coveralls
