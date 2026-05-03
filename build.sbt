@@ -19,6 +19,7 @@ lazy val root = project.in(file(".")).
 
 lazy val commonSettings = Seq(
   version := "0.1-SNAPSHOT",
+  resolvers += Resolver.sonatypeCentralSnapshots,
 
   scalacOptions ++= Seq(
     //"-target:jvm-1.8", // not applicable in 2.10
@@ -68,7 +69,8 @@ lazy val miniKanrenExamples = crossProject(JSPlatform, JVMPlatform).in(file(".")
   coverageEnabled := false,
   libraryDependencies ++= Seq(
     "co.fs2" %% "fs2-core" % "3.8.0",
-    "org.typelevel" %% "cats-effect" % "3.5.4"
+    "org.typelevel" %% "cats-effect" % "3.5.4",
+    "com.codiff" %% "fairstream" % "0.0-9f9db42-SNAPSHOT"
   ),
   Compile / run / fork := true,
   Compile / run / javaOptions += "-Dcats.effect.warnOnNonMainThreadDetected=false",

@@ -1,6 +1,7 @@
 package info.hircus.kanren.examples
 
 import cats.effect.{ExitCode, IO, IOApp}
+import com.codiff.fairstream.FairT
 import fs2.{Pull, Stream}
 import info.hircus.kanren.MiniKanren
 import info.hircus.kanren.MiniKanren.{Goal, Subst, Var}
@@ -110,6 +111,75 @@ object Fs2MiniKanrenBenchmark extends IOApp {
     }
   }
 
+  object MiniKanrenFair {
+    type GoalFair = Subst => FairT[IO, Subst]
+
+    def succeed: GoalFair = { s: Subst => FairT.unit[IO, Subst](s) }
+
+    def fail: GoalFair = { _: Subst => FairT.empty[IO, Subst] }
+
+    def bind(aInf: FairT[IO, Subst], g: GoalFair): FairT[IO, Subst] =
+      FairT.flatMap(aInf)(g)
+
+    def mplus(aInf: FairT[IO, Subst], f: => FairT[IO, Subst]): FairT[IO, Subst] =
+      FairT.mplus(aInf, f)
+
+    def bind_i(aInf: FairT[IO, Subst], g: GoalFair): FairT[IO, Subst] =
+      bind(aInf, g)
+
+    def mplus_i(aInf: FairT[IO, Subst], f: => FairT[IO, Subst]): FairT[IO, Subst] =
+      mplus(aInf, f)
+
+    def any_o(g: => GoalFair): GoalFair = if_e(g, succeed, any_o(g))
+
+    def always_o: GoalFair = any_o(succeed)
+
+    def all_aux(bindfn: (FairT[IO, Subst], GoalFair) => FairT[IO, Subst])(gs: GoalFair*): GoalFair =
+      gs.toList match {
+        case Nil => succeed
+        case g :: Nil => g
+        case g :: gs2 =>
+          s: Subst => bindfn(g(s), all(gs2: _*))
+      }
+
+    def all(gs: GoalFair*): GoalFair = all_aux(bind)(gs: _*)
+
+    def all_i(gs: GoalFair*): GoalFair = all_aux(bind_i)(gs: _*)
+
+    def both(g0: GoalFair, g1: GoalFair): GoalFair = { s: Subst =>
+      bind(g0(s), g1)
+    }
+
+    def if_e(testg: GoalFair, conseqg: => GoalFair, altg: => GoalFair): GoalFair = {
+      s: Subst =>
+        mplus(both(testg, conseqg)(s), altg(s))
+    }
+
+    def if_i(testg: GoalFair, conseqg: => GoalFair, altg: => GoalFair): GoalFair = {
+      s: Subst =>
+        mplus_i(both(testg, conseqg)(s), altg(s))
+    }
+
+    def mkEqual(t1: Any, t2: Any): GoalFair = { s: Subst =>
+      s.unify(t1, t2) match {
+        case Some(s2) => succeed(s2)
+        case None => fail(s)
+      }
+    }
+
+    def runFair(n: Int, v: Var)(g0: GoalFair, gs: GoalFair*): IO[List[Any]] = {
+      val g = gs.toList match {
+        case Nil => g0
+        case gls => all(g0 :: gls: _*)
+      }
+      val allres = FairT.flatMap(g(MiniKanren.empty_s)) { s: Subst =>
+        FairT.unit[IO, Any](MiniKanren.reify(MiniKanren.walk_*(v, s)))
+      }
+      val maxResults = if (n < 0) None else Some(n)
+      FairT.runM[IO, Any](None, maxResults, allres)
+    }
+  }
+
   private case class BenchResult(name: String, timesMs: List[Long], sample: List[Any])
 
   private def null_o(x: Any): Goal = MiniKanren.mkEqual(Nil, x)
@@ -148,6 +218,25 @@ object Fs2MiniKanrenBenchmark extends IOApp {
       MiniKanrenIO.if_e(car_o_io(l, x), MiniKanrenIO.succeed, { s: Subst =>
         val d = MiniKanren.make_var(Symbol("d"))
         MiniKanrenIO.all(cdr_o_io(l, d), member_io(x, d))(s)
+      }))
+
+  private def null_o_fair(x: Any): MiniKanrenFair.GoalFair = MiniKanrenFair.mkEqual(Nil, x)
+
+  private def car_o_fair(p: Any, a: Any): MiniKanrenFair.GoalFair = {
+    val d = MiniKanren.make_var(Symbol("d"))
+    MiniKanrenFair.mkEqual((a, d), p)
+  }
+
+  private def cdr_o_fair(p: Any, d: Any): MiniKanrenFair.GoalFair = {
+    val a = MiniKanren.make_var(Symbol("a"))
+    MiniKanrenFair.mkEqual((a, d), p)
+  }
+
+  private def member_fair(x: Any, l: Any): MiniKanrenFair.GoalFair =
+    MiniKanrenFair.if_e(null_o_fair(l), MiniKanrenFair.fail,
+      MiniKanrenFair.if_e(car_o_fair(l, x), MiniKanrenFair.succeed, { s: Subst =>
+        val d = MiniKanren.make_var(Symbol("d"))
+        MiniKanrenFair.all(cdr_o_fair(l, d), member_fair(x, d))(s)
       }))
 
   private def timed[A](block: IO[A]): IO[(Long, A)] =
@@ -205,6 +294,12 @@ object Fs2MiniKanrenBenchmark extends IOApp {
     MiniKanrenIO.runIO(takeN, q)(member_io(q, data))
   }
 
+  private def fairMemberTask(listSize: Int, takeN: Int): IO[List[Any]] = {
+    val q = MiniKanren.make_var(Symbol("q"))
+    val data = list2pair((1 to listSize).toList.map(_.asInstanceOf[Any]))
+    MiniKanrenFair.runFair(takeN, q)(member_fair(q, data))
+  }
+
   private def lazyBranchingTask(takeN: Int): IO[List[Any]] = IO {
     val v = MiniKanren.make_var(Symbol("v"))
     MiniKanren.run(takeN, v)(MiniKanren.both(
@@ -229,28 +324,46 @@ object Fs2MiniKanrenBenchmark extends IOApp {
     ))
   }
 
+  private def fairBranchingTask(takeN: Int): IO[List[Any]] = {
+    val v = MiniKanren.make_var(Symbol("v"))
+    MiniKanrenFair.runFair(takeN, v)(MiniKanrenFair.both(
+      MiniKanrenFair.all_i(
+        MiniKanrenFair.if_e(MiniKanrenFair.mkEqual(false, v), MiniKanrenFair.succeed,
+          MiniKanrenFair.mkEqual(true, v)),
+        MiniKanrenFair.always_o
+      ),
+      MiniKanrenFair.mkEqual(true, v)
+    ))
+  }
+
   private def compareWorkload(
                                title: String,
                                warmups: Int,
                                runs: Int,
                                lazyTask: IO[List[Any]],
-                               ioTask: IO[List[Any]]
+                               ioTask: IO[List[Any]],
+                               fairTask: IO[List[Any]]
                              ): IO[Unit] = {
     for {
       _ <- IO.println("")
       _ <- IO.println(s"Workload: $title")
       lazyRes <- measure("LazyList runtime", warmups, runs, lazyTask)
       ioRes <- measure("fs2 IO runtime", warmups, runs, ioTask)
-      _ <- IO.raiseWhen(lazyRes.sample != ioRes.sample)(
-        new IllegalStateException(s"Parity check failed for workload '$title'")
+      fairRes <- measure("fairstream runtime", warmups, runs, fairTask)
+      _ <- IO.raiseWhen(lazyRes.sample != ioRes.sample || lazyRes.sample != fairRes.sample)(
+        new IllegalStateException(s"Parity check failed for workload '$title' between runtimes")
       )
       _ <- IO.println("Parity check: OK")
       _ <- printResult(lazyRes)
       _ <- printResult(ioRes)
+      _ <- printResult(fairRes)
       lazyAvg = average(lazyRes.timesMs)
       ioAvg = average(ioRes.timesMs)
-      ratio = if (lazyAvg == 0.0) 0.0 else ioAvg / lazyAvg
-      _ <- IO.println(f"Speed ratio (fs2/lazy): $ratio%.3f")
+      fairAvg = average(fairRes.timesMs)
+      fs2Ratio = if (lazyAvg == 0.0) 0.0 else ioAvg / lazyAvg
+      fairRatio = if (lazyAvg == 0.0) 0.0 else fairAvg / lazyAvg
+      _ <- IO.println(f"Speed ratio (fs2/lazy): $fs2Ratio%.3f")
+      _ <- IO.println(f"Speed ratio (fair/lazy): $fairRatio%.3f")
     } yield ()
   }
 
@@ -263,7 +376,7 @@ object Fs2MiniKanrenBenchmark extends IOApp {
     val workload = parsed.getOrElse("workload", "both")
 
     (for {
-      _ <- IO.println("Benchmark: fs2 vs LazyList")
+      _ <- IO.println("Benchmark: LazyList vs fs2 vs fairstream")
       _ <- IO.println(s"listSize=$listSize, takeN=$takeN, warmups=$warmups, runs=$runs, workload=$workload")
       _ <- if (workload == "member" || workload == "both")
         compareWorkload(
@@ -271,7 +384,8 @@ object Fs2MiniKanrenBenchmark extends IOApp {
           warmups,
           runs,
           lazyMemberTask(listSize, takeN),
-          ioMemberTask(listSize, takeN)
+          ioMemberTask(listSize, takeN),
+          fairMemberTask(listSize, takeN)
         )
       else IO.unit
       _ <- if (workload == "branching" || workload == "both")
@@ -280,7 +394,8 @@ object Fs2MiniKanrenBenchmark extends IOApp {
           warmups,
           runs,
           lazyBranchingTask(takeN),
-          ioBranchingTask(takeN)
+          ioBranchingTask(takeN),
+          fairBranchingTask(takeN)
         )
       else IO.unit
       _ <- IO.raiseWhen(workload != "member" && workload != "branching" && workload != "both")(
