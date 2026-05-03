@@ -17,10 +17,14 @@ jobs:
 
       - name: Install sbt via coursier
         run: |
-          curl -fLo cs https://git.io/coursier-cli
-          chmod +x cs
-          ./cs install sbt
+          mkdir -p "$HOME/.local/bin"
+          curl -fLo "$HOME/.local/bin/cs" https://git.io/coursier-cli
+          chmod +x "$HOME/.local/bin/cs"
+          # Make the installed binaries available to subsequent steps
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+          # Make it available in this step as well
+          export PATH="$HOME/.local/bin:$PATH"
+          cs install sbt || ~/.local/bin/cs install sbt
 
       - name: Verify sbt is available
         run: |
@@ -28,5 +32,21 @@ jobs:
           which sbt || true
           sbt --version
 
-      - name: Run sbt tests
-        run: sbt test
+      - name: Cache sbt/ivy
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.ivy2/cache
+            ~/.sbt
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}-jdk-11
+          restore-keys: |
+            ${{ runner.os }}-sbt-
+
+      - name: Build, test, docs, and mdoc
+        run: >-
+          sbt -v ++${{ matrix.scala }} clean doc coverage test miniKanrenExamplesJVM/mdoc coverageReport coverageAggregate
+      - name: Upload coverage to Coveralls
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        run: sbt -v ++2.12.21 coveralls
