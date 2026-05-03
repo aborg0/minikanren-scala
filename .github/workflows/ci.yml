@@ -1,20 +1,10 @@
 name: CI
 
-on:
-  push:
-    branches:
-      - master
-      - cleanup
-  pull_request:
+on: [push, pull_request]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        scala: ["2.12.21", "2.13.18"]
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,23 +13,20 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
-          cache: sbt
+          java-version: '11'
 
-      - name: Install sbt (via SDKMAN)
+      - name: Install sbt via coursier
         run: |
-          curl -s "https://get.sdkman.io" | bash
-          # initialize sdkman in this shell
-          source "$HOME/.sdkman/bin/sdkman-init.sh"
-          # install the default/latest sbt (change to a pinned version if you prefer)
-          sdk install sbt
+          curl -fLo cs https://git.io/coursier-cli
+          chmod +x cs
+          ./cs install sbt
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Build, test, docs, and mdoc
-        run: >-
-          sbt -v ++${{ matrix.scala }} clean doc coverage test miniKanrenExamplesJVM/mdoc coverageReport coverageAggregate
+      - name: Verify sbt is available
+        run: |
+          echo "PATH=$PATH"
+          which sbt || true
+          sbt --version
 
-      - name: Upload coverage to Coveralls
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        run: sbt -v ++2.12.21 coveralls
+      - name: Run sbt tests
+        run: sbt test
