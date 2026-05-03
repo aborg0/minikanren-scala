@@ -57,7 +57,7 @@ object SubstSpecification extends Properties("Substitution") {
   property("freshvarls") = forAll { (n: Int, ls: List[Int]) =>
     import info.hircus.kanren.Prelude._
 
-    val vars = (n :: ls) map { n: Int => make_var(Symbol(n.toString)) }
+    val vars = (n :: ls) map { (n: Int) => make_var(Symbol(n.toString)) }
     val pvars = list2pair(vars).asInstanceOf[(Any, Any)]
 
     val s = reify_s(pvars, empty_s)

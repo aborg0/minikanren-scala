@@ -128,7 +128,7 @@ object MathSpecification extends Properties("Math") {
   property("adder-o") = {
     val res = run(-1, s)(both(adder_o(0, x, y, list2pair(List(1, 0, 1))),
       (x, (y, Nil)) === s)) map pair2list
-    ((res map { l: List[Any] => l map pair2list })
+    ((res map { (l: List[Any]) => l map pair2list })
       ==
       List(List(List(1, 0, 1), Nil),
         List(Nil, List(1, 0, 1)),
