@@ -66,6 +66,12 @@ lazy val miniKanrenExamples = crossProject(JSPlatform, JVMPlatform).in(file(".")
 
   ).jvmSettings(
   coverageEnabled := false,
+  libraryDependencies ++= Seq(
+    "co.fs2" %% "fs2-core" % "3.8.0",
+    "org.typelevel" %% "cats-effect" % "3.5.4"
+  ),
+  Compile / run / fork := true,
+  Compile / run / javaOptions += "-Dcats.effect.warnOnNonMainThreadDetected=false",
   mdocIn := (Compile / sourceDirectory).value / "tut",
   mdocOut := target.value / "mdoc",
   initialCommands := """
