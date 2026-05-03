@@ -1,8 +1,8 @@
 A Scala port of [miniKanren](http://minikanren.org/)
 ====================================================
 
-[![Build Status](https://travis-ci.org/aborg0/minikanren-scala.svg?branch=cleanup)](https://travis-ci.org/aborg0/minikanren-scala)
-[![Coverage Status](https://coveralls.io/repos/github/aborg0/minikanren-scala/badge.svg?branch=cleanup)](https://coveralls.io/github/aborg0/minikanren-scala?branch=cleanup)
+[![CI](https://github.com/michel-slm/minikanren-scala/actions/workflows/ci.yml/badge.svg?branch=cleanup)](https://github.com/michel-slm/minikanren-scala/actions/workflows/ci.yml)
+[![Coverage Status](https://coveralls.io/repos/github/michel-slm/minikanren-scala/badge.svg?branch=cleanup)](https://coveralls.io/github/michel-slm/minikanren-scala?branch=cleanup)
 
 Based on https://github.com/michel-slm/minikanren-scala
 
@@ -10,9 +10,9 @@ Please check the documentation in [docs/presentation.rst](docs/presentation) for
 
 You can also check the (basic) tutorial of miniKanren with this Scala syntax, using the following command (in the root project's sbt shell):
 
-    > miniKanrenExamplesJVM/tut
+    > miniKanrenExamplesJVM/mdoc
 
-snd check the output markdown file in `examples/jvm/target/scala-2.12/tut`
+and check the output markdown file in `examples/jvm/target/mdoc`
 
 Using REPL with SBT:
 

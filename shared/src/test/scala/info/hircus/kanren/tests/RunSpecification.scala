@@ -39,8 +39,8 @@ object RunSpecification extends Properties("Run") {
 
   import Prop.forAll
 
-  private val v = make_var('v)
-  private val w = make_var('w)
+  private val v = make_var(Symbol("v"))
+  private val w = make_var(Symbol("w"))
 
   property("==") = forAll { n: Int =>
     run(1, v)(v === n) == List(n)
@@ -69,26 +69,26 @@ object RunSpecification extends Properties("Run") {
   }
 
   property("null") = forAll { n: Int =>
-    val x = make_var('x)
+    val x = make_var(Symbol("x"))
     if (n <= 0) true
     else run(n, x)(null_o(x)) == List(Nil)
   }
 
   property("car") = forAll { (m: Int, n: Int) =>
-    val x = make_var('x)
+    val x = make_var(Symbol("x"))
     run(-1, x)(car_o((m, n), x)) == List(m)
   }
 
   property("cdr") = forAll { (m: Int, n: Int) =>
-    val x = make_var('x)
+    val x = make_var(Symbol("x"))
     run(-1, x)(cdr_o((m, n), x)) == List(n)
   }
 
   property("listgen") = forAll { n: Int =>
-    val ls = make_var('ls)
+    val ls = make_var(Symbol("ls"))
     if (n <= 0 || n > 100) true
     else {
-      val res = run(n, ls)(list_o(('a, ('b, ('c, ls)))))
+      val res = run(n, ls)(list_o((Symbol("a"), (Symbol("b"), (Symbol("c"), ls)))))
       res.length == n
     }
   }

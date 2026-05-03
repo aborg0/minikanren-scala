@@ -38,8 +38,8 @@ object UnifySpecification extends Properties("Unification") {
 
   import Prop.forAll
 
-  private val v = make_var('v)
-  private val w = make_var('w)
+  private val v = make_var(Symbol("v"))
+  private val w = make_var(Symbol("w"))
 
   /* Utility function */
   def remove_right_dups[A](s: List[A]): List[A] = {
@@ -50,7 +50,7 @@ object UnifySpecification extends Properties("Unification") {
   }
 
   property("bindonce") = forAll { n: Int =>
-    val v = make_var('v)
+    val v = make_var(Symbol("v"))
     (for {
       s <- empty_s.unify(v, n)
       res <- s.lookup(v)

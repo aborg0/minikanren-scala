@@ -74,6 +74,7 @@ object Prelude {
   def pair2list(p: Any): List[Any] = p match {
     case Nil => Nil
     case (h, tl) => h :: pair2list(tl)
+    case _ => throw new IllegalArgumentException("Not a proper list: " + p)
   }
 
 
@@ -84,7 +85,7 @@ object Prelude {
     * @param a anything
     */
   def car_o(p: Any, a: Any): Goal = {
-    val d = make_var('d)
+    val d = make_var(Symbol("d"))
     mkEqual((a, d), p)
   }
 
@@ -95,7 +96,7 @@ object Prelude {
     * @param d anything
     */
   def cdr_o(p: Any, d: Any): Goal = {
-    val a = make_var('a)
+    val a = make_var(Symbol("a"))
     mkEqual((a, d), p)
   }
 
@@ -105,8 +106,8 @@ object Prelude {
     * @param p something pair-able
     */
   def pair_o(p: Any): Goal = {
-    val a = make_var('a)
-    val d = make_var('d)
+    val a = make_var(Symbol("a"))
+    val d = make_var(Symbol("d"))
     mkEqual((a, d), p)
   }
 
@@ -128,7 +129,7 @@ object Prelude {
   def list_o(l: Any): Goal =
     if_e(null_o(l), succeed,
       if_e(pair_o(l), { s: Subst =>
-        val d = make_var('d)
+        val d = make_var(Symbol("d"))
         all(cdr_o(l, d),
           list_o(d))(s)
       },
@@ -144,9 +145,9 @@ object Prelude {
     */
   def append_o(l1: Any, l2: Any, l3: Any): Goal =
     if_i(null_o(l1), l2 === l3, { s: Subst => {
-      val x = make_var('x)
-      val l11 = make_var('l11)
-      val l31 = make_var('l31)
+      val x = make_var(Symbol("x"))
+      val l11 = make_var(Symbol("l11"))
+      val l31 = make_var(Symbol("l31"))
 
       all(l1 === ((x, l11)),
         l3 === ((x, l31)),
@@ -166,7 +167,7 @@ object Prelude {
   def member_o(x: Any, l: Any): Goal =
     if_e(null_o(l), fail,
       if_e(car_o(l, x), succeed, { s: Subst =>
-        val d = make_var('d)
+        val d = make_var(Symbol("d"))
         all(cdr_o(l, d),
           member_o(x, d))(s)
       }))

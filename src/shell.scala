@@ -4,9 +4,9 @@ import info.hircus.kanren.MKMath._
 import info.hircus.kanren.examples.PalProd._
 import info.hircus.kanren.examples.SendMoreMoney._
 
-var x = make_var('x)
-var y = make_var('y)
-var z = make_var('z)
+var x = make_var(Symbol("x"))
+var y = make_var(Symbol("y"))
+var z = make_var(Symbol("z"))
 
 def time(block: => Any) = {
   val start = System currentTimeMillis ()

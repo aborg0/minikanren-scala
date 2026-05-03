@@ -97,9 +97,9 @@ object MKMath {
     * @param c b+x+y >> 1
     */
   def full_adder_o(b: Any, x: Any, y: Any, r: Any, c: Any): Goal = {
-    val w = make_var('w)
-    val xy = make_var('xy)
-    val wz = make_var('wz)
+    val w = make_var(Symbol("w"))
+    val xy = make_var(Symbol("xy"))
+    val wz = make_var(Symbol("wz"))
 
     all(half_adder_o(x, y, w, xy),
       half_adder_o(w, b, r, wz),
@@ -126,6 +126,7 @@ object MKMath {
   def read_num(n: Any): Int = n match {
     case Nil => 0
     case (x, p) => x.asInstanceOf[Int] + (read_num(p) << 1)
+    case _ => throw new IllegalArgumentException("Not a valid Kanren number: " + n)
   }
 
   /* "Predicates" */
@@ -135,8 +136,8 @@ object MKMath {
     * @param n a bitlist number
     */
   def pos_o(n: Any): Goal = {
-    val a = make_var('a)
-    val d = make_var('d)
+    val a = make_var(Symbol("a"))
+    val d = make_var(Symbol("d"))
 
     mkEqual((a, d), n)
   }
@@ -147,9 +148,9 @@ object MKMath {
     * @param n a bitlist number
     */
   def gt1_o(n: Any): Goal = {
-    val a = make_var('a)
-    val ad = make_var('ad)
-    val dd = make_var('dd)
+    val a = make_var(Symbol("a"))
+    val ad = make_var(Symbol("ad"))
+    val dd = make_var(Symbol("dd"))
 
     mkEqual((a, (ad, dd)), n)
   }
@@ -187,10 +188,10 @@ object MKMath {
 
   private def eq_len_o_aux(n: Any, m: Any): Goal = {
     if_e(mkEqual((1, Nil), n), mkEqual((1, Nil), m), { s: Subst => {
-      val x = make_var('x)
-      val y = make_var('y)
-      val any1 = make_var('any1)
-      val any2 = make_var('any2)
+      val x = make_var(Symbol("x"))
+      val y = make_var(Symbol("y"))
+      val any1 = make_var(Symbol("any1"))
+      val any2 = make_var(Symbol("any2"))
       all(mkEqual((any1, x), n), pos_o(x),
         mkEqual((any2, y), m), pos_o(y),
         eq_len_o_aux(x, y))(s)
@@ -201,10 +202,10 @@ object MKMath {
   def lt_len_o(n: Any, m: Any): Goal = {
     if_e(mkEqual(Nil, n), pos_o(m),
       if_e(mkEqual((1, Nil), n), gt1_o(m), { s: Subst => {
-        val a = make_var('a)
-        val x = make_var('x)
-        val b = make_var('b)
-        val y = make_var('y)
+        val a = make_var(Symbol("a"))
+        val x = make_var(Symbol("x"))
+        val b = make_var(Symbol("b"))
+        val y = make_var(Symbol("y"))
 
         all(mkEqual((a, x), n), pos_o(x),
           mkEqual((b, y), m), pos_o(y),
@@ -222,7 +223,7 @@ object MKMath {
   def lt_o(n: Any, m: Any): Goal = {
     cond_i((lt_len_o(n, m), succeed),
       (eq_len_o(n, m), { s: Subst => {
-        val x = make_var('x)
+        val x = make_var(Symbol("x"))
         both(pos_o(x), add_o(n, x, m))(s)
       }
       }))
@@ -230,13 +231,13 @@ object MKMath {
 
   /* Math operations */
   def gen_adder_o(d: Any, n: Any, m: Any, r: Any): Goal = {
-    val a = make_var('a)
-    val b = make_var('b)
-    val c = make_var('c)
-    val e = make_var('e)
-    val x = make_var('x)
-    val y = make_var('y)
-    val z = make_var('z)
+    val a = make_var(Symbol("a"))
+    val b = make_var(Symbol("b"))
+    val c = make_var(Symbol("c"))
+    val e = make_var(Symbol("e"))
+    val x = make_var(Symbol("x"))
+    val y = make_var(Symbol("y"))
+    val z = make_var(Symbol("z"))
 
     all(mkEqual((a, x), n),
       mkEqual((b, y), m), pos_o(y),
@@ -251,8 +252,8 @@ object MKMath {
         if_i(both(mkEqual(1, d), mkEqual(Nil, m)), adder_o(0, n, (1, Nil), r),
           if_i(all(mkEqual(1, d), mkEqual(Nil, n), pos_o(m)), adder_o(0, (1, Nil), m, r),
             if_i(both(mkEqual((1, Nil), n), mkEqual((1, Nil), m)), { s: Subst => {
-              val a = make_var('a)
-              val c = make_var('c)
+              val a = make_var(Symbol("a"))
+              val c = make_var(Symbol("c"))
               both(mkEqual((a, (c, Nil)), r),
                 full_adder_o(d, 1, 1, a, c))(s)
             }
@@ -297,8 +298,8 @@ object MKMath {
         if_i(both(mkEqual((1, Nil), n), pos_o(m)), mkEqual(m, p),
           if_i(both(gt1_o(n), mkEqual((1, Nil), m)), mkEqual(n, p),
             if_i({ s: Subst => {
-              val x = make_var('x)
-              val z = make_var('z)
+              val x = make_var(Symbol("x"))
+              val z = make_var(Symbol("z"))
               all(mkEqual((0, x), n), pos_o(x),
                 mkEqual((0, z), p), pos_o(z),
                 gt1_o(m),
@@ -306,16 +307,16 @@ object MKMath {
             }
             }, succeed,
               if_i({ s: Subst => {
-                val x = make_var('x)
-                val y = make_var('y)
+                val x = make_var(Symbol("x"))
+                val y = make_var(Symbol("y"))
                 all(mkEqual((1, x), n), pos_o(x),
                   mkEqual((0, y), m), pos_o(y),
                   mul_o(m, n, p))(s)
               }
               }, succeed,
                 if_i({ s: Subst => {
-                  val x = make_var('x)
-                  val y = make_var('y)
+                  val x = make_var(Symbol("x"))
+                  val y = make_var(Symbol("y"))
                   all(mkEqual((1, x), n), pos_o(x),
                     mkEqual((1, y), m), pos_o(y),
                     odd_mul_o(x, n, m, p))(s)
@@ -325,7 +326,7 @@ object MKMath {
   }
 
   def odd_mul_o(x: Any, n: Any, m: Any, p: Any): Goal = {
-    val q = make_var('q)
+    val q = make_var(Symbol("q"))
     all(bound_mul_o(q, p, n, m),
       mul_o(x, m, q),
       add_o((0, q), m, p))
@@ -333,9 +334,9 @@ object MKMath {
 
   def bound_mul_o(q: Any, p: Any, n: Any, m: Any): Goal = {
     if_e(null_o(q), pair_o(p), { s: Subst => {
-      val x = make_var('x)
-      val y = make_var('y)
-      val z = make_var('z)
+      val x = make_var(Symbol("x"))
+      val y = make_var(Symbol("y"))
+      val z = make_var(Symbol("z"))
       all(cdr_o(q, x),
         cdr_o(p, y),
         if_i(both(null_o(n), cdr_o(m, z)),

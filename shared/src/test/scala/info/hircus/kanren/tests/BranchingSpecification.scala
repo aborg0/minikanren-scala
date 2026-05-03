@@ -36,7 +36,7 @@ import info.hircus.kanren.MiniKanren._
 import info.hircus.kanren.Prelude._
 
 object BranchingSpecification extends Properties("Branching") {
-  private val v = make_var('v)
+  private val v = make_var(Symbol("v"))
 
   property("fail-then-never") = run(1, v)(all(fail, never_o)) == Nil
 

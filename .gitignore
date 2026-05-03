@@ -15,3 +15,9 @@ bin
 /jvm/target/
 project/project/
 target/
+.metals/
+.vscode/
+.DS_Store
+.bsp/
+**/metals.sbt
+*.log

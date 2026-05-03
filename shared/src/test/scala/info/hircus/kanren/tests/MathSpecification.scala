@@ -54,12 +54,12 @@ object MathSpecification extends Properties("Math") {
   //    z <- Gen.choose(min, max)
   //  } yield (x,y,z)
 
-  private val b = make_var('b)
-  private val x = make_var('x)
-  private val y = make_var('y)
-  private val r = make_var('r) // remainder
-  private val c = make_var('c) // carry
-  private val s = make_var('s) // sum
+  private val b = make_var(Symbol("b"))
+  private val x = make_var(Symbol("x"))
+  private val y = make_var(Symbol("y"))
+  private val r = make_var(Symbol("r")) // remainder
+  private val c = make_var(Symbol("c")) // carry
+  private val s = make_var(Symbol("s")) // sum
 
   property("bit-xor-o 0") = run(-1, s)(both(bit_xor_o(x, y, 0), (x, y) === s)) == List((0, 0), (1, 1))
   property("bit-xor-o 1") = run(-1, s)(both(bit_xor_o(x, y, 1), (x, y) === s)) == List((1, 0), (0, 1))

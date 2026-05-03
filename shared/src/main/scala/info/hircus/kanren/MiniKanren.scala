@@ -34,6 +34,7 @@ package info.hircus.kanren
 import java.util
 
 import scala.language.implicitConversions
+import scala.collection.compat.immutable.LazyList
 import scala.scalajs.js.annotation.{JSExportAll, JSExportTopLevel}
 
 @JSExportTopLevel("miniKanren")
@@ -116,7 +117,7 @@ object MiniKanren {
     * This stream is empty if the goal fails; otherwise, it may contain any number of
     * substitutions
     */
-  type Goal = (Subst) => Stream[Subst]
+  type Goal = (Subst) => LazyList[Subst]
   val empty_s = EmptySubst
   val empty_cs = ConstraintSubst0(Nil)
 
@@ -147,13 +148,13 @@ object MiniKanren {
     * A goal that always succeeds, returning a stream containing only its input substitution
     */
   def succeed: Goal = { s: Subst =>
-    Stream.cons(s, Stream.empty)
+    LazyList.cons(s, LazyList.empty)
   }
 
   /**
     * A goal that always fails, returning an empty stream of substitution
     */
-  def fail: Goal = { s: Subst => Stream.empty }
+  def fail: Goal = { s: Subst => LazyList.empty }
 
 
   def pairp(x: Any): Boolean =
@@ -254,16 +255,16 @@ object MiniKanren {
    *       ((a f) (mplus (g a)
    *                (lambdaf@ () (bind (f) g)))))))
    */
-  def bind(a_inf: Stream[Subst], g: Goal): Stream[Subst] =
+  def bind(a_inf: LazyList[Subst], g: Goal): LazyList[Subst] =
     a_inf flatMap g
 
-  def bind_i(a_inf: Stream[Subst], g: Goal): Stream[Subst] =
-    a_inf match {
-      case Stream.Empty => a_inf
-      case Stream.cons(a, f) => f match {
-        case Stream.Empty => g(a)
-        case _ => mplus_i(g(a), bind(f, g))
-      }
+  def bind_i(a_inf: LazyList[Subst], g: Goal): LazyList[Subst] =
+    if (a_inf.isEmpty) a_inf
+    else {
+      val a = a_inf.head
+      val f = a_inf.tail
+      if (f.isEmpty) g(a)
+      else mplus_i(g(a), bind(f, g))
     }
 
   /* (define mplus
@@ -274,9 +275,9 @@ object MiniKanren {
    *       ((a f0) (choice a
    *                 (lambdaf@ () (mplus (f0) f)))))))
    */
-  def mplus(a_inf: Stream[Subst],
-            f: => Stream[Subst]): Stream[Subst] =
-    a_inf append f
+  def mplus(a_inf: LazyList[Subst],
+            f: => LazyList[Subst]): LazyList[Subst] =
+    a_inf #::: f
 
   /**
     * Like mplus, but interleaves the two input streams
@@ -286,15 +287,15 @@ object MiniKanren {
     * @param f     a second stream of substitutions to append
     * @return an interleaved stream of substitutions
     */
-  def mplus_i(a_inf: Stream[Subst],
-              f: => Stream[Subst]): Stream[Subst] = a_inf match {
-    case Stream.Empty => f
-    case Stream.cons(a, f0) => f0 match {
-      case Stream.Empty => Stream.cons(a, f)
-      case _ => Stream.cons(a, mplus_i(f, f0))
+  def mplus_i(a_inf: LazyList[Subst],
+              f: => LazyList[Subst]): LazyList[Subst] =
+    if (a_inf.isEmpty) f
+    else {
+      val a = a_inf.head
+      val f0 = a_inf.tail
+      if (f0.isEmpty) LazyList.cons(a, f)
+      else LazyList.cons(a, mplus_i(f, f0))
     }
-
-  }
 
 
   /* (define-syntax anye
@@ -314,7 +315,7 @@ object MiniKanren {
    *     ((_ g) (lambdag@ (s) (g s)))
    *     ((_ g^ g ...) (lambdag@ (s) (bind (g^ s) (all g ...))))))
    */
-  def all_aux(bindfn: (Stream[Subst], Goal) => Stream[Subst])(gs: Goal*): Goal = {
+  def all_aux(bindfn: (LazyList[Subst], Goal) => LazyList[Subst])(gs: Goal*): Goal = {
     gs.toList match {
       case Nil => succeed
       case g :: Nil => g
@@ -368,22 +369,21 @@ object MiniKanren {
   def if_a(testg: Goal, conseqg: => Goal, altg: => Goal): Goal = {
     s: Subst => {
       val s_inf = testg(s)
-      s_inf match {
-        case Stream.Empty => altg(s)
-        case Stream.cons(s_1, s_inf_1) => s_inf_1 match {
-          case Stream.Empty => conseqg(s_1)
-          case _ => bind(s_inf, conseqg)
-        }
+      if (s_inf.isEmpty) altg(s)
+      else {
+        val s_1 = s_inf.head
+        val s_inf_1 = s_inf.tail
+        if (s_inf_1.isEmpty) conseqg(s_1)
+        else bind(s_inf, conseqg)
       }
     }
   }
 
   def if_u(testg: Goal, conseqg: => Goal, altg: => Goal): Goal = {
     s: Subst => {
-      testg(s) match {
-        case Stream.Empty => altg(s)
-        case Stream.cons(s_1, s_inf) => conseqg(s_1)
-      }
+      val s_inf = testg(s)
+      if (s_inf.isEmpty) altg(s)
+      else conseqg(s_inf.head)
     }
   }
 

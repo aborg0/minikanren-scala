@@ -1,24 +1,13 @@
-resolvers += Resolver.url(
-  "bintray-laika-sbt-plugin-releases",
-  url("http://dl.bintray.com/content/jenshalm/sbt-plugins/"))(
-  Resolver.ivyStylePatterns)
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.21.0")
 
-resolvers += Resolver.url(
-  "bintray-scala.js-sbt-plugin-releases",
-  url("https://dl.bintray.com/content/scala-js/scala-js-releases"))(
-  Resolver.ivyStylePatterns)
+addSbtPlugin("org.portable-scala" % "sbt-crossproject" % "1.3.2")
 
-resolvers += Resolver.url(
-  "bintray-tut-sbt-plugin-releases",
-  url("https://dl.bintray.com/content/tpolecat/sbt-plugins"))(
-  Resolver.ivyStylePatterns)
+addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.3.2")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.21")
+addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.9.0")
 
-addSbtPlugin("org.tpolecat" % "tut-plugin" % "0.5.6")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.4.4")
 
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.1")
+addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.3.15")
 
-addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.1.0")
-
-addSbtPlugin("org.planet42" % "laika-sbt" % "0.7.0")
+addSbtPlugin("org.typelevel" % "laika-sbt" % "1.3.2")

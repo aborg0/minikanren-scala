@@ -45,10 +45,10 @@ object PalProd {
   import info.hircus.kanren.MKMath._
 
   private def add_len_o(a: Any, b: Any, c: Any): Goal = {
-    val a1 = make_var('a1)
-    val ar = make_var('ar)
-    val c1 = make_var('c1)
-    val cr = make_var('cr)
+    val a1 = make_var(Symbol("a1"))
+    val ar = make_var(Symbol("ar"))
+    val c1 = make_var(Symbol("c1"))
+    val cr = make_var(Symbol("cr"))
 
     if_e(mkEqual(a, Nil), eq_len_o(b, c),
       if_e(both(mkEqual(a, (a1, ar)), mkEqual(c, (c1, cr))),
@@ -65,15 +65,15 @@ object PalProd {
     * @param q a fresh logic variable. Ignore the result
     */
   def palprod_o(q: Any): Goal = {
-    val a = make_var('a)
-    val a9091 = make_var('a9091)
-    val b = make_var('b)
-    val b910 = make_var('b910)
-    val c = make_var('c)
-    val c100 = make_var('c100)
-    val t1 = make_var('t1)
-    val sum = make_var('sum)
-    val k = make_var('k)
+    val a = make_var(Symbol("a"))
+    val a9091 = make_var(Symbol("a9091"))
+    val b = make_var(Symbol("b"))
+    val b910 = make_var(Symbol("b910"))
+    val c = make_var(Symbol("c"))
+    val c100 = make_var(Symbol("c100"))
+    val t1 = make_var(Symbol("t1"))
+    val sum = make_var(Symbol("sum"))
+    val k = make_var(Symbol("k"))
 
     all(digit_o(a),
       pos_o(a),
@@ -96,7 +96,7 @@ object PalProd {
               fail)))),
       once({ s: Subst => {
         val _ /*the_sum*/ = walk_*(sum, s)
-        val xyz = make_var('xyz)
+        val xyz = make_var(Symbol("xyz"))
         all(lt_len_o(xyz, build_num(1024)),
           lt_len_o(build_num(32), xyz),
           if_e(add_len_o(k, xyz, sum), succeed,

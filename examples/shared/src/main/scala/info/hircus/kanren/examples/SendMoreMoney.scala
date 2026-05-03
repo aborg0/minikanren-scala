@@ -50,10 +50,10 @@ object SendMoreMoney {
 
   private def common_prefix_o(l: Any, l1: Any, l2: Any): Goal = {
     if_i(null_o(l), succeed, { s: Subst => {
-      val x = make_var('x)
-      val ls = make_var('ls)
-      val l1s = make_var('l1s)
-      val l2s = make_var('l2s)
+      val x = make_var(Symbol("x"))
+      val ls = make_var(Symbol("ls"))
+      val l1s = make_var(Symbol("l1s"))
+      val l2s = make_var(Symbol("l2s"))
 
       all(l === ((x, ls)),
         l1 === ((x, l1s)),
@@ -64,8 +64,8 @@ object SendMoreMoney {
   }
 
   def reme(x: Any, l: Any, lo: Any): Goal = {
-    val l1 = make_var('l1)
-    val l2 = make_var('l2)
+    val l1 = make_var(Symbol("l1"))
+    val l2 = make_var(Symbol("l2"))
 
     all_i(common_prefix_o(l1, l, lo),
       append_o(l1, (x, l2), l),
@@ -80,10 +80,10 @@ object SendMoreMoney {
     def make_number(digits: Any, n: Any) = {
       def loop(digits: Any, acc: Any): Goal = {
         if_i(digits === Nil, n === acc, { s: Subst => {
-          val d = make_var('d)
-          val rest = make_var('rest)
-          val acc1 = make_var('acc1)
-          val acc2 = make_var('acc2)
+          val d = make_var(Symbol("d"))
+          val rest = make_var(Symbol("rest"))
+          val acc1 = make_var(Symbol("acc1"))
+          val acc2 = make_var(Symbol("acc2"))
 
           all_i(digits === ((d, rest)),
             mul_o(acc, ten, acc1),
@@ -100,9 +100,9 @@ object SendMoreMoney {
                       all_digits: Any,
                       remained_digits: Any): Goal = {
       if_i(digits === Nil, all_digits === remained_digits, { s: Subst => {
-        val d = make_var('d)
-        val rest = make_var('rest)
-        val set1 = make_var('set1)
+        val d = make_var(Symbol("d"))
+        val rest = make_var(Symbol("rest"))
+        val set1 = make_var(Symbol("set1"))
 
         all_i(digits === ((d, rest)),
           reme(d, all_digits, set1),
@@ -116,8 +116,8 @@ object SendMoreMoney {
       * c1 and co can only be either 0 or 1
       */
     def add_carry(ci: Any, d1: Any, d2: Any, d_o: Any, co: Any) = {
-      val d11 = make_var('d11)
-      val dr = make_var('dr)
+      val d11 = make_var(Symbol("d11"))
+      val dr = make_var(Symbol("dr"))
 
       all(if_e(ci === Nil, succeed,
         ci === ((1, Nil))),
@@ -128,23 +128,23 @@ object SendMoreMoney {
             fail)))
     }
 
-    val s = make_var('s)
-    val e = make_var('e)
-    val n = make_var('n)
-    val d = make_var('d)
-    val m = make_var('m)
-    val o = make_var('o)
-    val r = make_var('r)
-    val y = make_var('y)
-    val send = make_var('send)
-    val more = make_var('more)
-    val money = make_var('money)
-    val c1 = make_var('c1)
-    val c2 = make_var('c2)
-    val c3 = make_var('c3)
-    val rd1 = make_var('rd1)
-    val rd2 = make_var('rd2)
-    val rd3 = make_var('rd3)
+    val s = make_var(Symbol("s"))
+    val e = make_var(Symbol("e"))
+    val n = make_var(Symbol("n"))
+    val d = make_var(Symbol("d"))
+    val m = make_var(Symbol("m"))
+    val o = make_var(Symbol("o"))
+    val r = make_var(Symbol("r"))
+    val y = make_var(Symbol("y"))
+    val send = make_var(Symbol("send"))
+    val more = make_var(Symbol("more"))
+    val money = make_var(Symbol("money"))
+    val c1 = make_var(Symbol("c1"))
+    val c2 = make_var(Symbol("c2"))
+    val c3 = make_var(Symbol("c3"))
+    val rd1 = make_var(Symbol("rd1"))
+    val rd2 = make_var(Symbol("rd2"))
+    val rd3 = make_var(Symbol("rd3"))
 
     all_i(choose_digits((m, (s, (o, Nil))), all_digits, rd1),
       pos_o(s),

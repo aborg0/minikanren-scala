@@ -1,8 +1,11 @@
-enablePlugins(ScalaJSPlugin)
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
+import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
+
+enablePlugins(ScalaJSPlugin, LaikaPlugin)
 
 name := "Scala miniKanren root project"
-crossScalaVersions := Seq("2.10.6", "2.11.11", "2.12.2")
-scalaVersion in ThisBuild := "2.12.4" // or any other Scala version >= 2.10.2 for Scala.js
+ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18")
+ThisBuild / scalaVersion := "2.13.18"
 
 // This is an application with a main method
 scalaJSUseMainModuleInitializer := true
@@ -29,35 +32,33 @@ lazy val commonSettings = Seq(
     //"-language:reflectiveCalls",
     "-Xlint",
     //"-Xfatal-warnings",
-    "-Yno-adapted-args",
     "-Ywarn-dead-code",
     //"-Ywarn-unused", // not applicable in 2.10
     "-Ywarn-numeric-widen",
-    "-Ywarn-value-discard",
-    "-Xfuture"
+    "-Ywarn-value-discard"
   ),
-  scalacOptions in Test -= "-Ywarn-numeric-widen"
+  Test / scalacOptions -= "-Ywarn-numeric-widen"
 
 )
 
 
-lazy val miniKanren = crossProject.in(file(".")).
+lazy val miniKanren = crossProject(JSPlatform, JVMPlatform).in(file(".")).
   settings(
     commonSettings,
     name := "Scala miniKanren",
-    libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.13.4" % "test",
-    libraryDependencies += "org.scala-js" %% "scalajs-stubs" % scalaJSVersion % "provided"
+    libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.18.1" % "test",
+    libraryDependencies += "org.scala-lang.modules" %%% "scala-collection-compat" % "2.13.0",
+    libraryDependencies += "org.scala-js" %% "scalajs-stubs" % "1.1.0" % "provided"
   ).jvmSettings(
     coverageEnabled := true,
-    fork in Test := true,
-    javaOptions in Test += "-Xss11m",
-    javaOptions in Test += "-Xmx3g",
-    scalacOptions += "-Xfatal-warnings"
+    Test / fork := true,
+    Test / javaOptions += "-Xss11m",
+    Test / javaOptions += "-Xmx3g"
   ).jsSettings(
     coverageEnabled := false
   )
 
-lazy val miniKanrenExamples = crossProject.in(file(".") / "examples").
+lazy val miniKanrenExamples = crossProject(JSPlatform, JVMPlatform).in(file(".") / "examples").
   dependsOn(miniKanren).
   settings(
     commonSettings,
@@ -65,6 +66,8 @@ lazy val miniKanrenExamples = crossProject.in(file(".") / "examples").
 
   ).jvmSettings(
   coverageEnabled := false,
+  mdocIn := (Compile / sourceDirectory).value / "tut",
+  mdocOut := target.value / "mdoc",
   initialCommands := """
                        |import info.hircus.kanren.MiniKanren._
                        |import info.hircus.kanren.Prelude._
@@ -72,9 +75,9 @@ lazy val miniKanrenExamples = crossProject.in(file(".") / "examples").
                        |import info.hircus.kanren.examples.PalProd._
                        |import info.hircus.kanren.examples.SendMoreMoney._
                        |
-                       |var x = make_var('x)
-                       |var y = make_var('y)
-                       |var z = make_var('z)
+                       |var x = make_var(Symbol("x"))
+                       |var y = make_var(Symbol("y"))
+                       |var z = make_var(Symbol("z"))
                        |
                        |def time(block: => Any) = {
                        |  val start = System currentTimeMillis ()
@@ -96,7 +99,7 @@ lazy val miniKanrenExamples = crossProject.in(file(".") / "examples").
                        |""".stripMargin
 ).jsSettings(
   coverageEnabled := false
-).enablePlugins(TutPlugin)
+).enablePlugins(MdocPlugin)
 
 lazy val miniKanrenJVM = miniKanren.jvm
 
@@ -105,10 +108,3 @@ lazy val miniKanrenJS = miniKanren.js
 lazy val miniKanrenExamplesJVM = miniKanrenExamples.jvm
 
 lazy val miniKanrenExamplesJS = miniKanrenExamples.js
-
-LaikaPlugin.defaults
-
-inConfig(LaikaKeys.Laika)(Seq(
-//  sourceDirectories := Seq(baseDirectory.value / "docs"),
-  LaikaKeys.encoding := "UTF-8"
-))

@@ -15,13 +15,13 @@ Scheme variables that are bound to new logic variables; `fresh`
 also performs conjunction of the relations within its body. Thus
 `(fresh (x y z) (== x z) (== 3 y))`
 
-```tut:silent
+```scala mdoc:silent
 import info.hircus.kanren._
 import info.hircus.kanren.MiniKanren._
 import info.hircus.kanren.MKMath._
-val x = make_var('x)
-val y = make_var('y)
-val z = make_var('z)
+val x = make_var(Symbol("x"))
+val y = make_var(Symbol("y"))
+val z = make_var(Symbol("z"))
 all(mkEqual(x, z), mkEqual(3, y))
 ```
 
@@ -31,9 +31,9 @@ with `3`.  This, however, is not a legal miniKanren
 program---we must wrap a `run` around the entire expression.
 `(run 1 (q) (fresh (x y z) (== x z) (== 3 y)))`
 
-   ```tut
-val q = make_var('q)
-run(1, q)(all(mkEqual(make_var('x), make_var('z)), mkEqual(build_num(3), make_var('y))))
+   ```scala mdoc
+val q = make_var(Symbol("q"))
+run(1, q)(all(mkEqual(make_var(Symbol("x")), make_var(Symbol("z"))), mkEqual(build_num(3), make_var(Symbol("y")))))
    ```
 
 The value returned is a list containing the single
@@ -43,8 +43,8 @@ the *reified value* of the unbound query variable `q` and thus
 represents any value. `q` also remains unbound in
 `(run 1 (q) (fresh (x y) (== x q) (== 3 y)))`
 
-   ```tut
-run(1, q)(all(mkEqual(make_var('x), q), mkEqual(build_num(3), make_var('y))))
+   ```scala mdoc
+run(1, q)(all(mkEqual(make_var(Symbol("x")), q), mkEqual(build_num(3), make_var(Symbol("y")))))
    ```
 
 We can get back more interesting values by unifying the query variable with another term.
@@ -54,9 +54,9 @@ We can get back more interesting values by unifying the query variable with anot
         (== x z)
         (== 3 y)))
 
-```tut
-val ex3_x = make_var('x)
-val ex3_z = make_var('z)
+```scala mdoc
+val ex3_x = make_var(Symbol("x"))
+val ex3_z = make_var(Symbol("z"))
 val three = build_num(3)
 run(1, y)(all(mkEqual(ex3_x, ex3_z), mkEqual(build_num(3), y)))
 ```
@@ -68,10 +68,11 @@ run(1, y)(all(mkEqual(ex3_x, ex3_z), mkEqual(build_num(3), y)))
         (== 3 z)
         (== q x)))
 
-```tut
-val ex4_x = make_var('x)
-val ex4_z = make_var('z)
-run(1, q)(all(mkEqual(ex4_x, ex4_z), mkEqual(build_num(3), ex4_z), mkEqual(q, ex4_x)))
+```scala mdoc
+val ex4_x = make_var(Symbol("x"))
+val ex4_z = make_var(Symbol("z"))
+val ex4_q = make_var(Symbol("q"))
+run(1, ex4_q)(all(mkEqual(ex4_x, ex4_z), mkEqual(build_num(3), ex4_z), mkEqual(ex4_q, ex4_x)))
 ```
 
     (run 1 (y)
@@ -80,9 +81,9 @@ run(1, q)(all(mkEqual(ex4_x, ex4_z), mkEqual(build_num(3), ex4_z), mkEqual(q, ex
         (== x y))
       (== 3 y))
 
-```tut
-val ex5_x = make_var('x)
-run(1, y)(all(mkEqual(build_num(4), ex5_x), mkEqual(ex5_x, make_var('y)), mkEqual(build_num(3), y)))
+```scala mdoc
+val ex5_x = make_var(Symbol("x"))
+run(1, y)(all(mkEqual(build_num(4), ex5_x), mkEqual(ex5_x, make_var(Symbol("y"))), mkEqual(build_num(3), y)))
 ```
 
 Each of these examples returns `(3)`; in the
@@ -94,14 +95,14 @@ the body of the expression is logically inconsistent.
 
     (run 1 (x) (== 4 3))
 
-```tut
-run(1, make_var('x))(mkEqual(build_num(4), build_num(3)))
+```scala mdoc
+run(1, make_var(Symbol("x")))(mkEqual(build_num(4), build_num(3)))
 ```
 
     (run 1 (x) (== 5 x) (== 6 x))
 
-```tut
-val ex8_x = make_var('x)
+```scala mdoc
+val ex8_x = make_var(Symbol("x"))
 run(1, x)(all(mkEqual(build_num(5), ex8_x), mkEqual(build_num(6), ex8_x)))
 ```
 
@@ -123,11 +124,11 @@ two answers.
           ((== `(,w ,x ,w) q)
            (== y w)))))
 
-```tut
-val ex9_q = make_var('q)
-val ex9_w = make_var('w)
-val ex9_x = make_var('x)
-val ex9_y = make_var('y)
+```scala mdoc
+val ex9_q = make_var(Symbol("q"))
+val ex9_w = make_var(Symbol("w"))
+val ex9_x = make_var(Symbol("x"))
+val ex9_y = make_var(Symbol("y"))
 run(2, ex9_q)(cond_e(
   (mkEqual(List(ex9_x, ex9_w, ex9_x), ex9_q), mkEqual(ex9_y, ex9_w)),
   (mkEqual(List(ex9_w, ex9_x, ex9_w), ex9_q), mkEqual(ex9_y, ex9_w))
