@@ -147,14 +147,14 @@ object MiniKanren {
   /**
     * A goal that always succeeds, returning a stream containing only its input substitution
     */
-  def succeed: Goal = { s: Subst =>
+  def succeed: Goal = { (s: Subst) =>
     LazyList.cons(s, LazyList.empty)
   }
 
   /**
     * A goal that always fails, returning an empty stream of substitution
     */
-  def fail: Goal = { s: Subst => LazyList.empty }
+  def fail: Goal = { (s: Subst) => LazyList.empty }
 
 
   def pairp(x: Any): Boolean =
@@ -305,7 +305,7 @@ object MiniKanren {
     *        (mplus (g1 s)
     *          (lambdaf@ () (g2 s)))))))
     */
-  def any_e(g1: Goal, g2: Goal): Goal = { s: Subst =>
+  def any_e(g1: Goal, g2: Goal): Goal = { (s: Subst) =>
     mplus(g1(s), g2(s))
   }
 
@@ -320,7 +320,7 @@ object MiniKanren {
       case Nil => succeed
       case g :: Nil => g
       case g :: gs2 =>
-        s: Subst => bindfn(g(s), all(gs2: _*))
+        (s: Subst) => bindfn(g(s), all(gs2: _*))
     }
   }
 
@@ -332,7 +332,7 @@ object MiniKanren {
   /**
     * Faster than all, if only two goals are used
     */
-  def both(g0: Goal, g1: Goal): Goal = { s: Subst =>
+  def both(g0: Goal, g1: Goal): Goal = { (s: Subst) =>
     g0(s) flatMap g1
   }
 
@@ -355,19 +355,19 @@ object MiniKanren {
     *                (e.g. using any_o), the stack overflows.
     */
   def if_e(testg: Goal, conseqg: => Goal, altg: => Goal): Goal = {
-    s: Subst =>
+    (s: Subst) =>
       mplus(both(testg, conseqg)(s),
         altg(s))
   }
 
   def if_i(testg: Goal, conseqg: => Goal, altg: => Goal): Goal = {
-    s: Subst =>
+    (s: Subst) =>
       mplus_i(both(testg, conseqg)(s),
         altg(s))
   }
 
   def if_a(testg: Goal, conseqg: => Goal, altg: => Goal): Goal = {
-    s: Subst => {
+    (s: Subst) => {
       val s_inf = testg(s)
       if (s_inf.isEmpty) altg(s)
       else {
@@ -380,7 +380,7 @@ object MiniKanren {
   }
 
   def if_u(testg: Goal, conseqg: => Goal, altg: => Goal): Goal = {
-    s: Subst => {
+    (s: Subst) => {
       val s_inf = testg(s)
       if (s_inf.isEmpty) altg(s)
       else conseqg(s_inf.head)
@@ -414,7 +414,7 @@ object MiniKanren {
 
   implicit def unifiable(a: Any): Unifiable = new Unifiable(a)
 
-  def mkEqual(t1: Any, t2: Any): Goal = { s: Subst => {
+  def mkEqual(t1: Any, t2: Any): Goal = { (s: Subst) => {
     s.unify(t1, t2) match {
       case Some(s2) => succeed(s2)
       case None => fail(s) // does not matter which substitution
@@ -422,7 +422,7 @@ object MiniKanren {
   }
   }
 
-  def neverEqual(t1: Any, t2: Any): Goal = { s: Subst => {
+  def neverEqual(t1: Any, t2: Any): Goal = { (s: Subst) => {
     val v1 = walk(t1, s)
     val v2 = walk(t2, s)
 
@@ -467,7 +467,7 @@ object MiniKanren {
       case Nil => g0
       case gls => all(g0 :: gls: _*)
     }
-    val allres = g(subst) map { s: Subst => reify(walk_*(v, s)) }
+    val allres = g(subst) map { (s: Subst) => reify(walk_*(v, s)) }
     (if (n < 0) allres else allres take n).toList
   }
 }

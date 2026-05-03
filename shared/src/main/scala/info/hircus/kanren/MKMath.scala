@@ -187,7 +187,7 @@ object MKMath {
   }
 
   private def eq_len_o_aux(n: Any, m: Any): Goal = {
-    if_e(mkEqual((1, Nil), n), mkEqual((1, Nil), m), { s: Subst => {
+    if_e(mkEqual((1, Nil), n), mkEqual((1, Nil), m), { (s: Subst) => {
       val x = make_var(Symbol("x"))
       val y = make_var(Symbol("y"))
       val any1 = make_var(Symbol("any1"))
@@ -201,7 +201,7 @@ object MKMath {
 
   def lt_len_o(n: Any, m: Any): Goal = {
     if_e(mkEqual(Nil, n), pos_o(m),
-      if_e(mkEqual((1, Nil), n), gt1_o(m), { s: Subst => {
+      if_e(mkEqual((1, Nil), n), gt1_o(m), { (s: Subst) => {
         val a = make_var(Symbol("a"))
         val x = make_var(Symbol("x"))
         val b = make_var(Symbol("b"))
@@ -222,7 +222,7 @@ object MKMath {
     */
   def lt_o(n: Any, m: Any): Goal = {
     cond_i((lt_len_o(n, m), succeed),
-      (eq_len_o(n, m), { s: Subst => {
+      (eq_len_o(n, m), { (s: Subst) => {
         val x = make_var(Symbol("x"))
         both(pos_o(x), add_o(n, x, m))(s)
       }
@@ -251,7 +251,7 @@ object MKMath {
       if_i(all(mkEqual(0, d), mkEqual(Nil, n), mkEqual(m, r)), pos_o(m),
         if_i(both(mkEqual(1, d), mkEqual(Nil, m)), adder_o(0, n, (1, Nil), r),
           if_i(all(mkEqual(1, d), mkEqual(Nil, n), pos_o(m)), adder_o(0, (1, Nil), m, r),
-            if_i(both(mkEqual((1, Nil), n), mkEqual((1, Nil), m)), { s: Subst => {
+            if_i(both(mkEqual((1, Nil), n), mkEqual((1, Nil), m)), { (s: Subst) => {
               val a = make_var(Symbol("a"))
               val c = make_var(Symbol("c"))
               both(mkEqual((a, (c, Nil)), r),
@@ -297,7 +297,7 @@ object MKMath {
       if_i(both(pos_o(n), mkEqual(Nil, m)), mkEqual(Nil, p),
         if_i(both(mkEqual((1, Nil), n), pos_o(m)), mkEqual(m, p),
           if_i(both(gt1_o(n), mkEqual((1, Nil), m)), mkEqual(n, p),
-            if_i({ s: Subst => {
+            if_i({ (s: Subst) => {
               val x = make_var(Symbol("x"))
               val z = make_var(Symbol("z"))
               all(mkEqual((0, x), n), pos_o(x),
@@ -306,7 +306,7 @@ object MKMath {
                 mul_o(x, m, z))(s)
             }
             }, succeed,
-              if_i({ s: Subst => {
+              if_i({ (s: Subst) => {
                 val x = make_var(Symbol("x"))
                 val y = make_var(Symbol("y"))
                 all(mkEqual((1, x), n), pos_o(x),
@@ -314,7 +314,7 @@ object MKMath {
                   mul_o(m, n, p))(s)
               }
               }, succeed,
-                if_i({ s: Subst => {
+                if_i({ (s: Subst) => {
                   val x = make_var(Symbol("x"))
                   val y = make_var(Symbol("y"))
                   all(mkEqual((1, x), n), pos_o(x),
@@ -333,7 +333,7 @@ object MKMath {
   }
 
   def bound_mul_o(q: Any, p: Any, n: Any, m: Any): Goal = {
-    if_e(null_o(q), pair_o(p), { s: Subst => {
+    if_e(null_o(q), pair_o(p), { (s: Subst) => {
       val x = make_var(Symbol("x"))
       val y = make_var(Symbol("y"))
       val z = make_var(Symbol("z"))

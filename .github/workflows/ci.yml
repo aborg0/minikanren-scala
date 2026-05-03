@@ -1,10 +1,21 @@
 name: CI
 
-on: [push, pull_request]
-
+on:
+  push:
+    branches:
+      - master
+      - cleanup
+  pull_request:
+    branches:
+      - master
+      - cleanup
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scala: ["2.12.21", "2.13.18", "3.8.3"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -13,7 +24,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '11'
+          java-version: '17'
 
       - name: Install sbt via coursier
         run: |

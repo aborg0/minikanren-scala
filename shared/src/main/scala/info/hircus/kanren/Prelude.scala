@@ -128,7 +128,7 @@ object Prelude {
     */
   def list_o(l: Any): Goal =
     if_e(null_o(l), succeed,
-      if_e(pair_o(l), { s: Subst =>
+      if_e(pair_o(l), { (s: Subst) =>
         val d = make_var(Symbol("d"))
         all(cdr_o(l, d),
           list_o(d))(s)
@@ -144,7 +144,7 @@ object Prelude {
     * @param l3 a Kanren list
     */
   def append_o(l1: Any, l2: Any, l3: Any): Goal =
-    if_i(null_o(l1), l2 === l3, { s: Subst => {
+    if_i(null_o(l1), l2 === l3, { (s: Subst) => {
       val x = make_var(Symbol("x"))
       val l11 = make_var(Symbol("l11"))
       val l31 = make_var(Symbol("l31"))
@@ -166,7 +166,7 @@ object Prelude {
     */
   def member_o(x: Any, l: Any): Goal =
     if_e(null_o(l), fail,
-      if_e(car_o(l, x), succeed, { s: Subst =>
+      if_e(car_o(l, x), succeed, { (s: Subst) =>
         val d = make_var(Symbol("d"))
         all(cdr_o(l, d),
           member_o(x, d))(s)

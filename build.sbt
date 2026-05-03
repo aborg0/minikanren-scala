@@ -4,7 +4,7 @@ import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 enablePlugins(ScalaJSPlugin, LaikaPlugin)
 
 name := "Scala miniKanren root project"
-ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18")
+ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.8.3")
 ThisBuild / scalaVersion := "2.13.18"
 
 // This is an application with a main method
