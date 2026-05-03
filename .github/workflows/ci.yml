@@ -26,6 +26,14 @@ jobs:
           java-version: "17"
           cache: sbt
 
+      - name: Install sbt (via SDKMAN)
+        run: |
+          curl -s "https://get.sdkman.io" | bash
+          # initialize sdkman in this shell
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          # install the default/latest sbt (change to a pinned version if you prefer)
+          sdk install sbt
+
       - name: Build, test, docs, and mdoc
         run: >-
           sbt -v ++${{ matrix.scala }} clean doc coverage test miniKanrenExamplesJVM/mdoc coverageReport coverageAggregate
