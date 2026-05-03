@@ -83,7 +83,7 @@ object PalProd {
       add_o(a9091, b910, t1),
       digit_o(c),
       mul_o(c, build_num(100), c100),
-      add_o(t1, c100, sum), { s: Subst => {
+      add_o(t1, c100, sum), { (s: Subst) => {
         val the_sum = walk_*(sum, s)
         if (!the_sum.isInstanceOf[Var]) println(11 * read_num(the_sum))
         succeed(s)
@@ -94,7 +94,7 @@ object PalProd {
           if_e(eq_len_o(k, build_num(32)), succeed,
             if_e(eq_len_o(k, build_num(64)), lt_o(k, build_num(91)),
               fail)))),
-      once({ s: Subst => {
+      once({ (s: Subst) => {
         val _ /*the_sum*/ = walk_*(sum, s)
         val xyz = make_var(Symbol("xyz"))
         all(lt_len_o(xyz, build_num(1024)),

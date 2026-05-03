@@ -49,7 +49,7 @@ object SendMoreMoney {
   import info.hircus.kanren.MKMath._
 
   private def common_prefix_o(l: Any, l1: Any, l2: Any): Goal = {
-    if_i(null_o(l), succeed, { s: Subst => {
+    if_i(null_o(l), succeed, { (s: Subst) => {
       val x = make_var(Symbol("x"))
       val ls = make_var(Symbol("ls"))
       val l1s = make_var(Symbol("l1s"))
@@ -79,7 +79,7 @@ object SendMoreMoney {
 
     def make_number(digits: Any, n: Any) = {
       def loop(digits: Any, acc: Any): Goal = {
-        if_i(digits === Nil, n === acc, { s: Subst => {
+        if_i(digits === Nil, n === acc, { (s: Subst) => {
           val d = make_var(Symbol("d"))
           val rest = make_var(Symbol("rest"))
           val acc1 = make_var(Symbol("acc1"))
@@ -99,7 +99,7 @@ object SendMoreMoney {
     def choose_digits(digits: Any,
                       all_digits: Any,
                       remained_digits: Any): Goal = {
-      if_i(digits === Nil, all_digits === remained_digits, { s: Subst => {
+      if_i(digits === Nil, all_digits === remained_digits, { (s: Subst) => {
         val d = make_var(Symbol("d"))
         val rest = make_var(Symbol("rest"))
         val set1 = make_var(Symbol("set1"))
@@ -159,7 +159,7 @@ object SendMoreMoney {
       make_number((s, (e, (n, (d, Nil)))), send),
       make_number((m, (o, (r, (e, Nil)))), more),
       make_number((m, (o, (n, (e, (y, Nil))))), money),
-      add_o(send, more, money), { s: Subst => {
+      add_o(send, more, money), { (s: Subst) => {
         val the_send = walk_*(send, s)
         val the_more = walk_*(more, s)
         val the_money = walk_*(money, s)
