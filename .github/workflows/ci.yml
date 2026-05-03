@@ -24,6 +24,8 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           # Make it available in this step as well
           export PATH="$HOME/.local/bin:$PATH"
+          export PATH="$PATH:$HOME/.local/share/coursier/bin"
+          echo "$HOME/.local/share/coursier/bin" >> $GITHUB_PATH
           cs install sbt || ~/.local/bin/cs install sbt
 
       - name: Verify sbt is available
