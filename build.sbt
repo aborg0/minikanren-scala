@@ -11,7 +11,14 @@ ThisBuild / scalaVersion := "2.13.18"
 scalaJSUseMainModuleInitializer := true
 
 lazy val root = project.in(file(".")).
-  aggregate(miniKanrenJS, miniKanrenJVM, miniKanrenExamplesJS, miniKanrenExamplesJVM).
+  aggregate(
+    miniKanrenJS,
+    miniKanrenJVM,
+    miniKanrenExamplesJS,
+    miniKanrenExamplesJVM,
+    miniKanrenScala3DSL,
+    miniKanrenLang
+  ).
   settings(
     publish := {},
     publishLocal := {}
@@ -47,7 +54,7 @@ lazy val miniKanren = crossProject(JSPlatform, JVMPlatform).in(file(".")).
     commonSettings,
     name := "Scala miniKanren",
     libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test,
-    libraryDependencies += "org.scala-lang.modules" %%% "scala-collection-compat" % "2.13.0",
+    libraryDependencies += ("org.scala-lang.modules" %% "scala-collection-compat" % "2.13.0").cross(CrossVersion.for3Use2_13),
     libraryDependencies += ("org.scala-js" %% "scalajs-stubs" % "1.1.0" /* % Provided */).cross(CrossVersion.for3Use2_13)
   ).jvmSettings(
     coverageEnabled := true,
@@ -66,7 +73,7 @@ lazy val miniKanrenExamples = crossProject(JSPlatform, JVMPlatform).in(file(".")
 
   ).jvmSettings(
   coverageEnabled := false,
-  mdocIn := (Compile / sourceDirectory).value / "tut",
+  mdocIn := (Compile / sourceDirectory).value / "mdoc",
   mdocOut := target.value / "mdoc",
   initialCommands := """
                        |import info.hircus.kanren.MiniKanren._
@@ -108,3 +115,44 @@ lazy val miniKanrenJS = miniKanren.js
 lazy val miniKanrenExamplesJVM = miniKanrenExamples.jvm
 
 lazy val miniKanrenExamplesJS = miniKanrenExamples.js
+
+lazy val miniKanrenScala3DSL = project.in(file("scala3dsl")).
+  dependsOn(miniKanren.jvm).
+  settings(
+    commonSettings,
+    name := "Scala miniKanren Scala 3 DSL",
+    scalaVersion := "3.8.3",
+    crossScalaVersions := Seq("3.8.3"),
+    conflictWarning := ConflictWarning.disable,
+    libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.18.1" % Test
+  ).settings(
+    mdocIn := (Compile / sourceDirectory).value / "mdoc",
+    mdocOut := target.value / "mdoc",
+    initialCommands := """
+                         |import info.hircus.kanren.dsl3.Scala3DSL.*
+                         |
+                         |val x = v("x")
+                         |val y = v("y")
+                         |val z = v("z")
+                         |""".stripMargin
+  ).enablePlugins(MdocPlugin
+  )
+
+lazy val miniKanrenLang = project.in(file("lang")).
+  dependsOn(miniKanren.jvm).
+  settings(
+    commonSettings,
+    name := "Scala miniKanren language",
+    scalaVersion := "3.8.3",
+    crossScalaVersions := Seq("3.8.3"),
+    conflictWarning := ConflictWarning.disable,
+    libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.1.1",
+    libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.18.1" % Test
+  ).settings(
+    mdocIn := (Compile / sourceDirectory).value / "mdoc",
+    mdocOut := target.value / "mdoc",
+    initialCommands := """
+                         |import info.hircus.kanren.lang.MiniKanrenLang
+                         |""".stripMargin
+  ).enablePlugins(MdocPlugin
+  )

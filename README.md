@@ -1,8 +1,8 @@
 A Scala port of [miniKanren](http://minikanren.org/)
 ====================================================
 
-[![CI](https://github.com/michel-slm/minikanren-scala/actions/workflows/ci.yml/badge.svg?branch=cleanup)](https://github.com/michel-slm/minikanren-scala/actions/workflows/ci.yml)
-[![Coverage Status](https://coveralls.io/repos/github/michel-slm/minikanren-scala/badge.svg?branch=cleanup)](https://coveralls.io/github/michel-slm/minikanren-scala?branch=cleanup)
+[![CI](https://github.com/aborg0/minikanren-scala/actions/workflows/ci.yml/badge.svg?branch=cleanup)](https://github.com/aborg0/minikanren-scala/actions/workflows/ci.yml)
+[![Coverage Status](https://coveralls.io/repos/github/aborg0/minikanren-scala/badge.svg?branch=cleanup)](https://coveralls.io/github/aborg0/minikanren-scala?branch=cleanup)
 
 Based on https://github.com/michel-slm/minikanren-scala
 
@@ -36,3 +36,14 @@ Another example (palindromes with six-digit numbers that are the product of two 
     100001
     101101
     res1: (Long, Any) = (40837,List((1,(1,(1,(0,(0,(1,(1,(1,(1,(1,(0,(0,(0,(1,List()))))))))))))))))
+
+Scala 3 DSL Notes
+-----------------
+
+The Scala 3 DSL module (`miniKanrenScala3DSL`) provides a more idiomatic surface over the core API.
+
+- Idiomatic relation names: `isEmptyList`, `isPair`, `head`, `tail`, `contains`, `append`
+- Compatibility aliases are still available: `null_o`, `pair_o`, `car_o`, `cdr_o`, `member_o`, `append_o`
+- `run` returns a `LazyList[Any]` for streaming consumption
+- Proper pair-lists like `(1, (2, (3, Nil)))` are postprocessed to Scala lists (`List(1, 2, 3)`) in DSL output
+- `runList` is available if an eager `List` is preferred
