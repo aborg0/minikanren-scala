@@ -15,6 +15,24 @@ object MiniKanrenLangParser {
   private def lowerIdent[$: P]: P[String] = P((CharIn("a-z") ~ CharsWhileIn("a-zA-Z0-9_", 0)).!)
   private def upperIdent[$: P]: P[String] = P((CharIn("A-Z_") ~ CharsWhileIn("a-zA-Z0-9_", 0)).!)
   private def number[$: P]: P[Int] = P(StringIn("+", "-").? ~ CharsWhileIn("0-9", 1)).!.map(_.toInt)
+  
+  // Operator parsing for infix notation (highest precedence: *, /; then +, -; then comparisons)
+  private def addOp[$: P]: P[String] = P(StringIn("+", "-")).!
+  private def mulOp[$: P]: P[String] = P(StringIn("*", "/")).!
+  private def cmpOp[$: P]: P[String] = P(StringIn("=:=", "=\\=", "=<", ">=", "<", ">")).!
+  private def opToRelation(op: String, lhs: Expr, rhs: Expr): Goal = op match {
+    case "+" => QueryIR.Rel("add_o", List(lhs, rhs, QueryIR.Ref("_result")))
+    case "-" => QueryIR.Rel("sub_o", List(lhs, rhs, QueryIR.Ref("_result")))
+    case "*" => QueryIR.Rel("mul_o", List(lhs, rhs, QueryIR.Ref("_result")))
+    case "/" => QueryIR.Rel("div_o", List(lhs, rhs, QueryIR.Ref("_result")))
+    case "<" => QueryIR.Rel("lt_o", List(lhs, rhs))
+    case ">" => QueryIR.Rel("gt_o", List(lhs, rhs))
+    case "=<" => QueryIR.Rel("le_o", List(lhs, rhs))
+    case ">=" => QueryIR.Rel("ge_o", List(lhs, rhs))
+    case "=:=" => QueryIR.Rel("eq_num_o", List(lhs, rhs))
+    case "=\\=" => QueryIR.Rel("ne_num_o", List(lhs, rhs))
+    case _ => throw new IllegalArgumentException("Unknown operator: " + op)
+  }
   private def stringLit[$: P]: P[String] = P("\"" ~/ CharsWhile(c => c != '"' && c != '\\').! ~ "\"")
   private def charLit[$: P]: P[Char] = P("'" ~/ CharsWhile(c => c != '\'' && c != '\\').! ~ "'").map(_.charAt(0))
 
@@ -117,6 +135,47 @@ object MiniKanrenLangParser {
     case other => other
   }
 
+  // Prolog operator expressions with precedence
+  private def prologMulExpr[$: P]: P[Expr] =
+    P(prologTerm ~ (ws ~ mulOp ~ ws ~ prologTerm).rep).map {
+      case (left, ops) if ops.isEmpty => left
+      case (left, ops) => ops.foldLeft(left) { case (acc, (op, right)) =>
+        QueryIR.Atom((op, acc, right))
+      }
+    }
+
+  private def prologAddExpr[$: P]: P[Expr] =
+    P(prologMulExpr ~ (ws ~ addOp ~ ws ~ prologMulExpr).rep).map {
+      case (left, ops) if ops.isEmpty => left
+      case (left, ops) => ops.foldLeft(left) { case (acc, (op, right)) =>
+        QueryIR.Atom((op, acc, right))
+      }
+    }
+
+  private def prologOperatorGoal[$: P]: P[Goal] =
+    P(prologAddExpr ~ ws ~ cmpOp ~ ws ~ prologAddExpr).map { case (lhs, op, rhs) =>
+      opToRelation(op, lhs, rhs)
+    }
+
+  private def prologOperatorEqGoal[$: P]: P[Goal] =
+    P(prologAddExpr ~ ws ~ "=" ~ ws ~ prologAddExpr).map { case (lhs, rhs) =>
+      (lhs, rhs) match {
+        case (QueryIR.Atom((op: String, l: Expr, r: Expr)), _) =>
+          QueryIR.Rel(
+            if (op == "+") "add_o" else if (op == "-") "sub_o" else if (op == "*") "mul_o" else "div_o",
+            List(l, r, rhs)
+          )
+        case (_, QueryIR.Atom((op: String, l: Expr, r: Expr))) =>
+          QueryIR.Rel(
+            if (op == "+") "add_o" else if (op == "-") "sub_o" else if (op == "*") "mul_o" else "div_o",
+            List(l, r, lhs)
+          )
+        case _ => QueryIR.Eq(lhs, rhs)
+      }
+    }
+
+  private def prologAtomicGoal[$: P]: P[Goal] = P(prologOperatorGoal | prologOperatorEqGoal | prologCall.map(prologCallGoal))
+
   private def extractRel(value: Any): QueryIR.Rel = value match {
     case rel: QueryIR.Rel => rel
     case product: Product =>
@@ -134,9 +193,8 @@ object MiniKanrenLangParser {
   }
 
   private def prologGoal[$: P]: P[Goal] =
-    P(prologCall.rep(sep = ws ~ "," ~ ws, min = 1)).map { calls =>
-      val goals = calls.toList.map(prologCallGoal)
-      goals match {
+    P(prologAtomicGoal.rep(sep = ws ~ "," ~ ws, min = 1)).map { goals =>
+      goals.toList match {
         case head :: Nil => head
         case many => QueryIR.Conj(many)
       }

@@ -111,3 +111,48 @@ Notes:
 - Variables are uppercase (for example `X`, `Y`, `Z`).
 - Atoms are lowercase (for example `anakin`, `leia`).
 - List head-tail deconstruction works in terms, for example `eq([H|T], [1,2,3])`.
+
+## String and Number Built-ins
+
+```scala mdoc
+val conversionSource =
+  """
+    |run 1 x {
+    |  atom_number "42" x
+    |}
+    |""".stripMargin
+
+MiniKanrenLang.run(conversionSource)
+```
+
+```scala mdoc
+val modSource =
+  """
+    |run 1 x {
+    |  mod_o 10 3 x
+    |}
+    |""".stripMargin
+
+MiniKanrenLang.run(modSource)
+```
+
+Available conversion helpers include:
+
+- `atom_number/2`
+- `number_codes/2`
+- `number_chars/2`
+
+## Prelude Registry Customization
+
+`QueryCompiler` supports runtime custom relation registration through `PreludeRegistry`.
+
+```scala mdoc
+import info.hircus.kanren.dslir.PreludeRegistry
+import info.hircus.kanren.MiniKanren
+
+PreludeRegistry.register("always_42", { args =>
+  MiniKanren.mkEqual(42, args.head)
+})
+```
+
+Custom entries can be removed with `PreludeRegistry.unregister(name)` or fully reset with `PreludeRegistry.clear()`.

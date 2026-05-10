@@ -4,6 +4,9 @@ import info.hircus.kanren.MiniKanren
 import info.hircus.kanren.MiniKanren.{Goal => MKGoal, Var}
 import info.hircus.kanren.Prelude
 import info.hircus.kanren.MKMath
+import info.hircus.kanren.StringOps
+import info.hircus.kanren.ListOps
+import info.hircus.kanren.dslir.PreludeRegistry
 import info.hircus.kanren.dslir.QueryIR._
 import scala.collection.compat.immutable.LazyList
 import scala.collection.immutable.Map
@@ -65,7 +68,9 @@ object QueryCompiler {
     }
   }
 
-  private def compileBuiltinRelation(name: String, args: List[Any]): Option[MKGoal] = name match {
+  private def compileBuiltinRelation(name: String, args: List[Any]): Option[MKGoal] = {
+    PreludeRegistry.resolve(name, args).orElse {
+      name match {
     case "null_o" =>
       expectArity(name, args, 1)
       Some(Prelude.null_o(args(0)))
@@ -102,6 +107,21 @@ object QueryCompiler {
     case "lt_o" =>
       expectArity(name, args, 2)
       Some(MKMath.lt_o(args(0), args(1)))
+    case "gt_o" =>
+      expectArity(name, args, 2)
+      Some(MKMath.gt_o(args(0), args(1)))
+    case "le_o" =>
+      expectArity(name, args, 2)
+      Some(MKMath.le_o(args(0), args(1)))
+    case "ge_o" =>
+      expectArity(name, args, 2)
+      Some(MKMath.ge_o(args(0), args(1)))
+    case "eq_num_o" =>
+      expectArity(name, args, 2)
+      Some(MKMath.eq_num_o(args(0), args(1)))
+    case "ne_num_o" =>
+      expectArity(name, args, 2)
+      Some(MKMath.ne_num_o(args(0), args(1)))
     case "bit_xor_o" =>
       expectArity(name, args, 3)
       Some(MKMath.bit_xor_o(args(0), args(1), args(2)))
@@ -117,8 +137,75 @@ object QueryCompiler {
     case "mul_o" =>
       expectArity(name, args, 3)
       Some(MKMath.mul_o(args(0), args(1), args(2)))
+    case "div_o" =>
+      expectArity(name, args, 3)
+      Some(MKMath.div_o(args(0), args(1), args(2)))
+    case "mod_o" =>
+      expectArity(name, args, 3)
+      Some(MKMath.mod_o(args(0), args(1), args(2)))
+    // String operations
+    case "atom_concat" =>
+      expectArity(name, args, 3)
+      Some(StringOps.atom_concat(args(0), args(1), args(2)))
+    case "atom_codes" =>
+      expectArity(name, args, 2)
+      Some(StringOps.atom_codes(args(0), args(1)))
+    case "atom_chars" =>
+      expectArity(name, args, 2)
+      Some(StringOps.atom_chars(args(0), args(1)))
+    case "atom_length" =>
+      expectArity(name, args, 2)
+      Some(StringOps.atom_length(args(0), args(1)))
+    case "atom_string" =>
+      expectArity(name, args, 2)
+      Some(StringOps.atom_string(args(0), args(1)))
+    case "sub_atom" =>
+      expectArity(name, args, 5)
+      Some(StringOps.sub_atom(args(0), args(1), args(2), args(3), args(4)))
+    case "upcase_atom" =>
+      expectArity(name, args, 2)
+      Some(StringOps.upcase_atom(args(0), args(1)))
+    case "downcase_atom" =>
+      expectArity(name, args, 2)
+      Some(StringOps.downcase_atom(args(0), args(1)))
+    case "atom_number" =>
+      expectArity(name, args, 2)
+      Some(StringOps.atom_number(args(0), args(1)))
+    case "number_codes" =>
+      expectArity(name, args, 2)
+      Some(StringOps.number_codes(args(0), args(1)))
+    case "number_chars" =>
+      expectArity(name, args, 2)
+      Some(StringOps.number_chars(args(0), args(1)))
+    // List operations
+    case "length_o" =>
+      expectArity(name, args, 2)
+      Some(ListOps.length_o(args(0), args(1)))
+    case "reverse_o" =>
+      expectArity(name, args, 2)
+      Some(ListOps.reverse_o(args(0), args(1)))
+    case "nth0_o" =>
+      expectArity(name, args, 3)
+      Some(ListOps.nth0_o(args(0), args(1), args(2)))
+    case "nth1_o" =>
+      expectArity(name, args, 3)
+      Some(ListOps.nth1_o(args(0), args(1), args(2)))
+    case "last_o" =>
+      expectArity(name, args, 2)
+      Some(ListOps.last_o(args(0), args(1)))
+    case "prefix_o" =>
+      expectArity(name, args, 2)
+      Some(ListOps.prefix_o(args(0), args(1)))
+    case "suffix_o" =>
+      expectArity(name, args, 2)
+      Some(ListOps.suffix_o(args(0), args(1)))
+    case "select_o" =>
+      expectArity(name, args, 3)
+      Some(ListOps.select_o(args(0), args(1), args(2)))
     case _ =>
       None
+      }
+    }
   }
 
   private def compileGoal(goal: Goal, env: Map[String, Var], constants: Set[String], declarations: Map[String, List[Declaration]]): MKGoal = goal match {

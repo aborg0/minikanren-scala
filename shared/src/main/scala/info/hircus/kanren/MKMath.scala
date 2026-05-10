@@ -229,6 +229,48 @@ object MKMath {
       }))
   }
 
+  /**
+    * Holds if n > m (greater than)
+    *
+    * @param n a number
+    * @param m a number
+    */
+  def gt_o(n: Any, m: Any): Goal = lt_o(m, n)
+
+  /**
+    * Holds if n =< m (less than or equal)
+    *
+    * @param n a number
+    * @param m a number
+    */
+  def le_o(n: Any, m: Any): Goal = {
+    if_e(lt_o(n, m), succeed, mkEqual(n, m))
+  }
+
+  /**
+    * Holds if n >= m (greater than or equal)
+    *
+    * @param n a number
+    * @param m a number
+    */
+  def ge_o(n: Any, m: Any): Goal = le_o(m, n)
+
+  /**
+    * Holds if n =:= m (arithmetic equal)
+    *
+    * @param n a number
+    * @param m a number
+    */
+  def eq_num_o(n: Any, m: Any): Goal = mkEqual(n, m)
+
+  /**
+    * Holds if n =\= m (arithmetic not equal)
+    *
+    * @param n a number
+    * @param m a number
+    */
+  def ne_num_o(n: Any, m: Any): Goal = neverEqual(n, m)
+
   /* Math operations */
   def gen_adder_o(d: Any, n: Any, m: Any, r: Any): Goal = {
     val a = make_var(Symbol("a"))
@@ -344,6 +386,40 @@ object MKMath {
           both(cdr_o(n, z), bound_mul_o(x, y, z, m))))(s)
     }
     })
+  }
+
+  /**
+    * Division relation (simplified stub)
+    * Note: Full integer division with bitlist numbers is complex.
+    * This is a placeholder; use explicit predicates for division logic.
+    *
+    * @param n dividend
+    * @param m divisor
+    * @param q quotient
+    */
+  def div_o(n: Any, m: Any, q: Any): Goal = {
+    // Simplified: only handle concrete integer division
+    (n, m, q) match {
+      case (a: Int, b: Int, _) if b != 0 => mkEqual(a / b, q)
+      case _ => fail
+    }
+  }
+
+  /**
+    * Modulus relation
+    * mod_o(n, m, r) holds when r is the remainder of dividing n by m
+    * mod_o(10, 3, X) => X = 1
+    *
+    * @param n dividend
+    * @param m divisor
+    * @param r remainder
+    */
+  def mod_o(n: Any, m: Any, r: Any): Goal = {
+    // Simplified: only handle concrete integer modulus
+    (n, m, r) match {
+      case (a: Int, b: Int, _) if b != 0 => mkEqual(a % b, r)
+      case _ => fail
+    }
   }
 
 }

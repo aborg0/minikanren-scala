@@ -132,4 +132,52 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
       case Right(_) => false
     }
   }
+
+  property("parse mod_o predicate") = {
+    val source =
+      """
+        |?- mod_o(10, 3, X).
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) => program.goals.nonEmpty
+      case Left(_) => false
+    }
+  }
+
+  property("parse atom_number predicate") = {
+    val source =
+      """
+        |?- atom_number('42', X).
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) => program.goals.nonEmpty
+      case Left(_) => false
+    }
+  }
+
+  property("parse number_codes predicate") = {
+    val source =
+      """
+        |?- number_codes(42, X).
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) => program.goals.nonEmpty
+      case Left(_) => false
+    }
+  }
+
+  property("parse number_chars predicate") = {
+    val source =
+      """
+        |?- number_chars(42, X).
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) => program.goals.nonEmpty
+      case Left(_) => false
+    }
+  }
 }
