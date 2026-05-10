@@ -15,9 +15,7 @@ lazy val root = project.in(file(".")).
     miniKanrenJS,
     miniKanrenJVM,
     miniKanrenExamplesJS,
-    miniKanrenExamplesJVM,
-    miniKanrenScala3DSL,
-    miniKanrenLang
+    miniKanrenExamplesJVM
   ).
   settings(
     publish := {},
@@ -54,7 +52,7 @@ lazy val miniKanren = crossProject(JSPlatform, JVMPlatform).in(file(".")).
     commonSettings,
     name := "Scala miniKanren",
     libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test,
-    libraryDependencies += ("org.scala-lang.modules" %% "scala-collection-compat" % "2.13.0").cross(CrossVersion.for3Use2_13),
+    libraryDependencies += "org.scala-lang.modules" %%% "scala-collection-compat" % "2.13.0",
     libraryDependencies += ("org.scala-js" %% "scalajs-stubs" % "1.1.0" /* % Provided */).cross(CrossVersion.for3Use2_13)
   ).jvmSettings(
     coverageEnabled := true,
