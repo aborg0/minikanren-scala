@@ -64,3 +64,50 @@ MiniKanrenLang.run(brokenSource)
 ```
 
 A successful run returns `Right(List(...))`, while parser failures return `Left(ParseError(...))`.
+
+## Declarative Infix Syntax (Experimental)
+
+The original `run { ... }` syntax remains fully supported.
+You can also use a declaration-oriented syntax with constants, variables, infix relations, rules, and `ask`.
+
+```scala mdoc
+val declarativeSource =
+  """
+    |const Anakin, Luke, Leia
+    |var x, y, z
+    |rel/2 infix fatherOf
+    |Anakin fatherOf Luke
+    |Anakin fatherOf Leia
+    |sibling(x, y) = fatherOf(z, x) & fatherOf(z, y) & not x = y
+    |ask x sibling(Luke, x)
+    |""".stripMargin
+
+MiniKanrenLang.run(declarativeSource)
+```
+
+Notes:
+
+- `not x = y` is v1 sugar for disequality.
+- `var a in [1, 2, 3]` is accepted as finite-domain syntax.
+- List head-tail deconstruction is supported: `[h | t]` and `[a, b | t]`.
+
+## Prolog-like Syntax (Experimental)
+
+You can also write facts/rules with `.` and `:-`, then query with `?-`.
+
+```scala mdoc
+val prologSource =
+  """
+    |father_of(anakin, luke).
+    |father_of(anakin, leia).
+    |?- father_of(anakin, Y).
+    |""".stripMargin
+
+MiniKanrenLang.run(prologSource)
+```
+
+Notes:
+
+- Variables are uppercase (for example `X`, `Y`, `Z`).
+- Atoms are lowercase (for example `anakin`, `leia`).
+- List head-tail deconstruction works in terms, for example `eq([H|T], [1,2,3])`.

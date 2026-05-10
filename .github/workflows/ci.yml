@@ -58,6 +58,11 @@ jobs:
       - name: Build, test, docs, and mdoc
         run: >-
           sbt -v ++${{ matrix.scala }} clean doc coverage test miniKanrenExamplesJVM/mdoc coverageReport coverageAggregate
+
+      - name: Scala 3 only modules
+        if: matrix.scala == '3.8.3'
+        run: >-
+          sbt -v ++3.8.3 miniKanrenScala3DSL/test miniKanrenScala3DSL/mdoc miniKanrenLang/test miniKanrenLang/mdoc
       - name: Upload coverage to Coveralls
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         env:
