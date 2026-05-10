@@ -6,7 +6,6 @@ import info.hircus.kanren.Prelude
 import info.hircus.kanren.MKMath
 import info.hircus.kanren.StringOps
 import info.hircus.kanren.ListOps
-import info.hircus.kanren.dslir.PreludeRegistry
 import info.hircus.kanren.dslir.QueryIR._
 import scala.collection.compat.immutable.LazyList
 import scala.collection.immutable.Map
