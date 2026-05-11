@@ -69,6 +69,17 @@ object AllOpsSpecification extends Properties("AllOps") {
     x != null
   }
 
+  property("make_var increments counts per symbol") = {
+    val symbol = Symbol("counter_test")
+    val first = make_var(symbol)
+    val second = make_var(symbol)
+    val other = make_var(Symbol("counter_test_other"))
+
+    first.name == symbol &&
+    first.count + 1 == second.count &&
+    other.count == 0
+  }
+
   property("list2pair and pair2list available from AllOps") = {
     val list = List(1, 2, 3)
     val pair = list2pair(list)

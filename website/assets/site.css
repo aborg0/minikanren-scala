@@ -1,0 +1,275 @@
+:root {
+  --bg: #f3efe5;
+  --surface: rgba(255, 252, 245, 0.9);
+  --surface-strong: #fffaf0;
+  --text: #142126;
+  --muted: #53636b;
+  --line: rgba(20, 33, 38, 0.12);
+  --sand: #d7a86e;
+  --teal: #2f8f83;
+  --rust: #b65336;
+  --shadow: 0 24px 60px rgba(20, 33, 38, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(47, 143, 131, 0.18), transparent 32%),
+    radial-gradient(circle at right, rgba(182, 83, 54, 0.18), transparent 28%),
+    linear-gradient(180deg, #faf6ee 0%, var(--bg) 100%);
+}
+
+body.landing-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: linear-gradient(rgba(20, 33, 38, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(20, 33, 38, 0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
+.shell {
+  width: min(1120px, calc(100vw - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 4rem;
+}
+
+.hero,
+.card,
+.page-header {
+  position: relative;
+  z-index: 1;
+}
+
+.hero {
+  padding: 4rem 0 2rem;
+}
+
+.eyebrow,
+.result-label,
+.control-label,
+.mono,
+.subtle,
+.status {
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.eyebrow,
+.result-label,
+.control-label {
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1,
+ h2 {
+  margin: 0;
+}
+
+h1 {
+  max-width: 12ch;
+  font-size: clamp(3rem, 8vw, 5.8rem);
+  line-height: 0.95;
+}
+
+.lede,
+.page-header p,
+.card p {
+  max-width: 60ch;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.hero-actions,
+.toolbar {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.button,
+.card a,
+.back-link {
+  text-decoration: none;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.75rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.button.primary {
+  background: var(--text);
+  color: #fff;
+}
+
+.button.secondary {
+  border-color: var(--line);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.three-up {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.two-up {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.card,
+.page-header {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+}
+
+.card {
+  padding: 1.4rem;
+}
+
+.page-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.page-header {
+  padding: 1.4rem;
+}
+
+.card a,
+.back-link {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.accent-sand {
+  border-top: 6px solid var(--sand);
+}
+
+.accent-teal {
+  border-top: 6px solid var(--teal);
+}
+
+.accent-rust {
+  border-top: 6px solid var(--rust);
+}
+
+.playground-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 1rem;
+}
+
+.single-runner {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.playground-card,
+.results-card {
+  min-height: 420px;
+}
+
+.editor,
+.select-input,
+.output {
+  width: 100%;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: rgba(20, 33, 38, 0.04);
+  color: var(--text);
+  font: inherit;
+}
+
+.editor,
+.output {
+  min-height: 280px;
+  padding: 1rem;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.output {
+  white-space: pre-wrap;
+}
+
+.select-input {
+  padding: 0.8rem 1rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.status,
+.subtle {
+  color: var(--muted);
+}
+
+.docs-grid .card {
+  min-height: 170px;
+}
+
+.markdown-card {
+  padding: 1.75rem;
+}
+
+.markdown-card h1,
+.markdown-card h2,
+.markdown-card h3 {
+  max-width: none;
+  margin-top: 1.4rem;
+  font-size: revert;
+  line-height: 1.2;
+}
+
+.markdown-card pre {
+  overflow-x: auto;
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(20, 33, 38, 0.06);
+}
+
+.markdown-card code {
+  font-family: "IBM Plex Mono", monospace;
+}
+
+@media (max-width: 900px) {
+  .three-up,
+  .two-up,
+  .playground-layout,
+  .single-runner {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding-top: 2rem;
+  }
+
+  h1 {
+    max-width: none;
+  }
+}

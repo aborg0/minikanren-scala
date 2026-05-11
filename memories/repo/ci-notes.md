@@ -1,0 +1,2 @@
+- CI should avoid root aggregated `test`/`doc` tasks across mixed Scala-version subprojects; use project-scoped tasks per matrix version to prevent cross-version resolution/linking failures.
+- `miniKanrenScala3DSLCrossJVM` and `miniKanrenLangCrossJVM` currently do not have `src/main/mdoc`; do not run `.../mdoc` for them.

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scala miniKanren Docs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <main class="shell page-stack">
+    <header class="page-header">
+      <a class="back-link" href="../index.html">Home</a>
+      <h1>Documentation</h1>
+      <p>These pages render the generated mdoc markdown published with the site artifact.</p>
+    </header>
+
+    <section class="grid two-up docs-grid" id="docs-list"></section>
+  </main>
+
+  <script src="../assets/site-app.js"></script>
+  <script src="../assets/site.js"></script>
+  <script>
+    window.SitePages.renderDocsIndex(document.getElementById('docs-list'));
+  </script>
+</body>
+</html>

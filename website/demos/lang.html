@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Language DSL Playground</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <main class="shell page-stack">
+    <header class="page-header">
+      <a class="back-link" href="../index.html">Home</a>
+      <h1>Language DSL Playground</h1>
+      <p>Edit a source string and run it entirely in the browser through the parser and query compiler.</p>
+    </header>
+
+    <section class="playground-layout">
+      <article class="card playground-card">
+        <label class="control-label" for="lang-source">Program</label>
+        <textarea id="lang-source" class="editor" spellcheck="false">run -1 x {
+  member_o(x, [1, 2, 3])
+}</textarea>
+        <div class="toolbar">
+          <button class="button primary" id="lang-run" type="button">Run program</button>
+        </div>
+      </article>
+
+      <article class="card results-card">
+        <p class="result-label">Result</p>
+        <div class="status" id="lang-status">Ready.</div>
+        <pre class="output" id="lang-output">[]</pre>
+      </article>
+    </section>
+  </main>
+
+  <script src="../assets/site-app.js"></script>
+  <script src="../assets/site.js"></script>
+  <script>
+    window.SitePages.bindLanguagePlayground({
+      runButton: document.getElementById('lang-run'),
+      source: document.getElementById('lang-source'),
+      status: document.getElementById('lang-status'),
+      output: document.getElementById('lang-output')
+    });
+  </script>
+</body>
+</html>

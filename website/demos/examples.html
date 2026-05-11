@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Example Relations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <main class="shell page-stack">
+    <header class="page-header">
+      <a class="back-link" href="../index.html">Home</a>
+      <h1>Example Relations</h1>
+      <p>Run the classic bundled logic examples through the Scala.js runtime.</p>
+    </header>
+
+    <section class="playground-layout single-runner">
+      <article class="card playground-card">
+        <label class="control-label" for="example-demo">Example</label>
+        <select id="example-demo" class="select-input">
+          <option value="send-more-money">Send More Money</option>
+          <option value="palprod">Palindrome Product</option>
+        </select>
+        <div class="toolbar">
+          <button class="button primary" id="example-run" type="button">Run example</button>
+        </div>
+      </article>
+
+      <article class="card results-card">
+        <p class="result-label">Result</p>
+        <div class="status" id="example-status">Ready.</div>
+        <pre class="output" id="example-output">[]</pre>
+      </article>
+    </section>
+  </main>
+
+  <script src="../assets/site-app.js"></script>
+  <script src="../assets/site.js"></script>
+  <script>
+    window.SitePages.bindExamplePlayground({
+      select: document.getElementById('example-demo'),
+      runButton: document.getElementById('example-run'),
+      status: document.getElementById('example-status'),
+      output: document.getElementById('example-output')
+    });
+  </script>
+</body>
+</html>

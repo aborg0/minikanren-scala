@@ -4,9 +4,17 @@ A Scala port of [miniKanren](http://minikanren.org/)
 [![CI](https://github.com/aborg0/minikanren-scala/actions/workflows/ci.yml/badge.svg?branch=cleanup)](https://github.com/aborg0/minikanren-scala/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/aborg0/minikanren-scala/badge.svg?branch=cleanup)](https://coveralls.io/github/aborg0/minikanren-scala?branch=cleanup)
 
+**[📖 View the live documentation and interactive demos »](https://aborg0.github.io/minikanren-scala/)**
+
 Based on https://github.com/michel-slm/minikanren-scala
 
-Please check the documentation in [docs/presentation.rst](docs/presentation) for details.
+The website includes browser-based playgrounds where you can:
+- Try the external language DSL with live code execution
+- Run compiled Scala 3 DSL demos
+- Explore the Solve More Money and palindrome examples
+- Browse the generated API documentation
+
+Local documentation is also available in [docs/presentation.rst](docs/presentation).
 
 You can also check the (basic) tutorial of miniKanren with this Scala syntax, using the following command (in the root project's sbt shell):
 

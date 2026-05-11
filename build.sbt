@@ -1,3 +1,4 @@
+import org.scalajs.linker.interface.ModuleKind
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 
@@ -15,7 +16,12 @@ lazy val root = project.in(file(".")).
     miniKanrenJS,
     miniKanrenJVM,
     miniKanrenExamplesJS,
-    miniKanrenExamplesJVM
+    miniKanrenExamplesJVM,
+    miniKanrenScala3DSL,
+    miniKanrenScala3DSLJS,
+    miniKanrenLang,
+    miniKanrenLangJS,
+    miniKanrenWebsite
   ).
   settings(
     publish := {},
@@ -114,16 +120,20 @@ lazy val miniKanrenExamplesJVM = miniKanrenExamples.jvm
 
 lazy val miniKanrenExamplesJS = miniKanrenExamples.js
 
-lazy val miniKanrenScala3DSL = project.in(file("scala3dsl")).
-  dependsOn(miniKanren.jvm).
+lazy val miniKanrenScala3DSLCross = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure).in(file("scala3dsl")).
+  dependsOn(miniKanren).
   settings(
     commonSettings,
     name := "Scala miniKanren Scala 3 DSL",
     scalaVersion := "3.8.3",
     crossScalaVersions := Seq("3.8.3"),
     conflictWarning := ConflictWarning.disable,
-    libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.18.1" % Test
-  ).settings(
+    libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test
+  )
+
+lazy val miniKanrenScala3DSL = miniKanrenScala3DSLCross.jvm.
+  enablePlugins(MdocPlugin).
+  settings(
     mdocIn := (Compile / sourceDirectory).value / "mdoc",
     mdocOut := target.value / "mdoc",
     initialCommands := """
@@ -133,24 +143,44 @@ lazy val miniKanrenScala3DSL = project.in(file("scala3dsl")).
                          |val y = v("y")
                          |val z = v("z")
                          |""".stripMargin
-  ).enablePlugins(MdocPlugin
   )
 
-lazy val miniKanrenLang = project.in(file("lang")).
-  dependsOn(miniKanren.jvm).
+lazy val miniKanrenScala3DSLJS = miniKanrenScala3DSLCross.js
+
+lazy val miniKanrenLangCross = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure).in(file("lang")).
+  dependsOn(miniKanren).
   settings(
     commonSettings,
     name := "Scala miniKanren language",
     scalaVersion := "3.8.3",
     crossScalaVersions := Seq("3.8.3"),
     conflictWarning := ConflictWarning.disable,
-    libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.1.1",
-    libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.18.1" % Test
-  ).settings(
+    libraryDependencies += "com.lihaoyi" %%% "fastparse" % "3.1.1",
+    libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test
+  )
+
+lazy val miniKanrenLang = miniKanrenLangCross.jvm.
+  enablePlugins(MdocPlugin).
+  settings(
     mdocIn := (Compile / sourceDirectory).value / "mdoc",
     mdocOut := target.value / "mdoc",
     initialCommands := """
                          |import info.hircus.kanren.lang.MiniKanrenLang
                          |""".stripMargin
-  ).enablePlugins(MdocPlugin
+  )
+
+lazy val miniKanrenLangJS = miniKanrenLangCross.js
+
+lazy val miniKanrenWebsite = project.in(file("website-demo")).
+  enablePlugins(ScalaJSPlugin).
+  dependsOn(miniKanrenExamplesJS, miniKanrenScala3DSLJS, miniKanrenLangJS).
+  settings(
+    commonSettings,
+    name := "Scala miniKanren website demo",
+    scalaVersion := "3.8.3",
+    crossScalaVersions := Seq("3.8.3"),
+    conflictWarning := ConflictWarning.disable,
+    coverageEnabled := false,
+    scalaJSUseMainModuleInitializer := false,
+    scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.NoModule))
   )

@@ -31,9 +31,8 @@
 
 package info.hircus.kanren
 
-import java.util
-
 import scala.language.implicitConversions
+import scala.collection.mutable
 import scala.collection.compat.immutable.LazyList
 import scala.scalajs.js.annotation.{JSExportAll, JSExportTopLevel}
 
@@ -128,7 +127,7 @@ object MiniKanren {
     */
   case class Var(name: Symbol, count: Int)
 
-  private val m = new util.HashMap[Symbol, Int]()
+  private val varCounts = mutable.Map.empty[Symbol, Int].withDefaultValue(0)
 
   /**
     * Creates a logic variable, with the requested name, and a count that is automatically incremented
@@ -137,8 +136,8 @@ object MiniKanren {
     * @return a logic variable
     */
   def make_var(name: Symbol): Var = {
-    val count = m.get(name)
-    m.put(name, count + 1)
+    val count = varCounts(name)
+    varCounts.update(name, count + 1)
     Var(name, count)
   }
 

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scala 3 DSL Demos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <main class="shell page-stack">
+    <header class="page-header">
+      <a class="back-link" href="../index.html">Home</a>
+      <h1>Scala 3 DSL Demos</h1>
+      <p>These scenarios are compiled from the Scala 3 DSL and exposed with editable inputs so they can run on a static site.</p>
+    </header>
+
+    <section class="playground-layout">
+      <article class="card playground-card">
+        <label class="control-label" for="scala3-demo">Scenario</label>
+        <select id="scala3-demo" class="select-input">
+          <option value="equality">Equality</option>
+          <option value="disjunction">Disjunction</option>
+          <option value="contains">Contains</option>
+          <option value="append">Append</option>
+        </select>
+
+        <label class="control-label" for="scala3-payload">Input</label>
+        <textarea id="scala3-payload" class="editor" spellcheck="false">5</textarea>
+
+        <div class="toolbar">
+          <button class="button primary" id="scala3-run" type="button">Run scenario</button>
+        </div>
+      </article>
+
+      <article class="card results-card">
+        <p class="result-label">Result</p>
+        <div class="status" id="scala3-status">Ready.</div>
+        <pre class="output" id="scala3-output">[]</pre>
+      </article>
+    </section>
+  </main>
+
+  <script src="../assets/site-app.js"></script>
+  <script src="../assets/site.js"></script>
+  <script>
+    window.SitePages.bindScala3Playground({
+      select: document.getElementById('scala3-demo'),
+      payload: document.getElementById('scala3-payload'),
+      runButton: document.getElementById('scala3-run'),
+      status: document.getElementById('scala3-status'),
+      output: document.getElementById('scala3-output')
+    });
+  </script>
+</body>
+</html>

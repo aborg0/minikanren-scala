@@ -9,6 +9,10 @@ on:
     branches:
       - master
       - cleanup
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,10 +22,10 @@ jobs:
         scala: ["2.12.21", "2.13.18", "3.8.3"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -31,9 +35,7 @@ jobs:
           mkdir -p "$HOME/.local/bin"
           curl -fLo "$HOME/.local/bin/cs" https://git.io/coursier-cli
           chmod +x "$HOME/.local/bin/cs"
-          # Make the installed binaries available to subsequent steps
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          # Make it available in this step as well
           export PATH="$HOME/.local/bin:$PATH"
           export PATH="$PATH:$HOME/.local/share/coursier/bin"
           echo "$HOME/.local/share/coursier/bin" >> $GITHUB_PATH
@@ -45,26 +47,76 @@ jobs:
           which sbt || true
           sbt --version
 
-      - name: Cache sbt/ivy
+      - name: Cache sbt and ivy
         uses: actions/cache@v4
         with:
           path: |
             ~/.ivy2/cache
             ~/.sbt
-          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}-jdk-11
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt', '**/project/plugins.sbt', '**/project/build.properties') }}
           restore-keys: |
             ${{ runner.os }}-sbt-
 
-      - name: Build, test, docs, and mdoc
+      - name: Build JVM targets (Scala 2.x)
+        if: matrix.scala != '3.8.3'
         run: >-
-          sbt -v ++${{ matrix.scala }} clean doc coverage test miniKanrenExamplesJVM/mdoc coverageReport coverageAggregate
+          SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++${{ matrix.scala }} clean miniKanrenJVM/doc coverage miniKanrenJVM/test miniKanrenExamplesJVM/mdoc miniKanrenJVM/coverageReport
 
-      - name: Scala 3 only modules
+      - name: Build Scala 3 JVM modules
         if: matrix.scala == '3.8.3'
         run: >-
-          sbt -v ++3.8.3 miniKanrenScala3DSL/test miniKanrenScala3DSL/mdoc miniKanrenLang/test miniKanrenLang/mdoc
+          SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.8.3 clean miniKanrenJVM/doc miniKanrenJVM/test miniKanrenExamplesJVM/mdoc miniKanrenScala3DSLCrossJVM/test miniKanrenLangCrossJVM/test
+
+      - name: Build and test Scala.js targets
+        if: matrix.scala == '3.8.3'
+        run: >-
+          SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.8.3 miniKanrenJS/test miniKanrenExamplesJS/test miniKanrenScala3DSLCrossJS/test miniKanrenLangCrossJS/test miniKanrenWebsite/fullLinkJS
+
       - name: Upload coverage to Coveralls
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        run: sbt -v ++2.12.21 coveralls
+        run: SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++2.12.21 coveralls
+
+  pages:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install sbt via coursier
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fLo "$HOME/.local/bin/cs" https://git.io/coursier-cli
+          chmod +x "$HOME/.local/bin/cs"
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.local/bin:$PATH"
+          export PATH="$PATH:$HOME/.local/share/coursier/bin"
+          echo "$HOME/.local/share/coursier/bin" >> $GITHUB_PATH
+          cs install sbt || ~/.local/bin/cs install sbt
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build static site artifact
+        run: bash ./scripts/build-site.sh
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site-dist
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4

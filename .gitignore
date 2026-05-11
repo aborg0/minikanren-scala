@@ -21,3 +21,4 @@ target/
 .bsp/
 **/metals.sbt
 *.log
+site-dist/
