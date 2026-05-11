@@ -65,7 +65,7 @@ jobs:
       - name: Build Scala 3 JVM modules
         if: matrix.scala == '3.8.3'
         run: >-
-          SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.8.3 clean miniKanrenJVM/doc miniKanrenJVM/test miniKanrenExamplesJVM/mdoc miniKanrenScala3DSLCrossJVM/test miniKanrenLangCrossJVM/test
+          SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.8.3 clean miniKanrenJVM/doc coverage miniKanrenJVM/test miniKanrenExamplesJVM/mdoc miniKanrenScala3DSLCrossJVM/test miniKanrenLangCrossJVM/test coverageAggregate
 
       - name: Build and test Scala.js targets
         if: matrix.scala == '3.8.3'
@@ -73,13 +73,13 @@ jobs:
           SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.8.3 miniKanrenJS/test miniKanrenExamplesJS/test miniKanrenScala3DSLCrossJS/test miniKanrenLangCrossJS/test miniKanrenWebsite/fullLinkJS
 
       - name: Upload coverage to Coveralls
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: matrix.scala == '3.8.3' && github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/cleanup')
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        run: SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++2.12.21 coveralls
+        run: SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.8.3 coveralls
 
   pages:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/cleanup')
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -109,6 +109,8 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Build static site artifact
         run: bash ./scripts/build-site.sh

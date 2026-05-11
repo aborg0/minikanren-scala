@@ -36,17 +36,19 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-encoding", "UTF-8",
     "-unchecked",
-    "-feature",
+    "-feature"
     //"-language:implicitConversions",
     //"-language:postfixOps",
     //"-language:higherKinds",
     //"-language:reflectiveCalls",
-    "-Xlint",
-    //"-Xfatal-warnings",
-    "-Ywarn-dead-code",
-    //"-Ywarn-unused", // not applicable in 2.10
-    "-Ywarn-numeric-widen",
-    "-Ywarn-value-discard"
+    //"-Xfatal-warnings"
+  ) ++ (
+    if (scalaVersion.value.startsWith("3")) Seq() else Seq(
+      "-Xlint",
+      "-Ywarn-dead-code",
+      "-Ywarn-numeric-widen",
+      "-Ywarn-value-discard"
+    )
   ),
   Test / scalacOptions -= "-Ywarn-numeric-widen"
 
