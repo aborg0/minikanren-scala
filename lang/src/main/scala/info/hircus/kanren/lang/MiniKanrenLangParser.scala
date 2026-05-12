@@ -56,6 +56,11 @@ object MiniKanrenLangParser {
       case (name, args) => QueryIR.Rel(name, args.toList)
     }
 
+  private def prefixCallGoal[$: P]: P[Goal] =
+    P(ident ~ ws ~ term.rep(sep = ws, min = 1)).map {
+      case (name, args) => QueryIR.Rel(name, args.toList)
+    }
+
   private def newEqGoal[$: P]: P[Goal] = P(term ~ ws ~ "=" ~ ws ~ term).map { case (a, b) => QueryIR.Eq(a, b) }
   private def notEqGoal[$: P]: P[Goal] = P(keyword("not") ~/ ws ~ newEqGoal).map {
     case QueryIR.Eq(lhs, rhs) => QueryIR.Neq(lhs, rhs)
@@ -261,7 +266,7 @@ object MiniKanrenLangParser {
   private def anyGoal[$: P]: P[Goal] =
     P(keyword("any") ~/ ws ~ "{" ~ ws ~ goal.rep(sep = ws ~ ";" ~ ws) ~ ws ~ "}").map(gs => QueryIR.Disj(gs.toList))
 
-  private def goal[$: P]: P[Goal] = P(eqGoal | neqGoal | allGoal | anyGoal | callGoal)
+  private def goal[$: P]: P[Goal] = P(eqGoal | neqGoal | allGoal | anyGoal | callGoal | prefixCallGoal)
 
   private def runProgram[$: P]: P[Program] = {
     P(

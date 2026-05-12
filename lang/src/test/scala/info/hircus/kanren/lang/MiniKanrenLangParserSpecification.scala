@@ -180,4 +180,54 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
       case Left(_) => false
     }
   }
+
+  property("parse atom_number in run block with prefix call syntax") = {
+    val source =
+      """
+        |run 1 x {
+        |  atom_number "42" x
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) => program.goals.nonEmpty
+      case Left(_) => false
+    }
+  }
+
+  property("parse mod_o in run block with prefix call syntax") = {
+    val source =
+      """
+        |run 1 x {
+        |  mod_o 10 3 x
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) => program.goals.nonEmpty
+      case Left(_) => false
+    }
+  }
+
+  property("run atom_number in run block with prefix call syntax") = {
+    val source =
+      """
+        |run 1 x {
+        |  atom_number "42" x
+        |}
+        |""".stripMargin
+
+    MiniKanrenLang.run(source) == Right(List(42))
+  }
+
+  property("run mod_o in run block with prefix call syntax") = {
+    val source =
+      """
+        |run 1 x {
+        |  mod_o 10 3 x
+        |}
+        |""".stripMargin
+
+    MiniKanrenLang.run(source) == Right(List(1))
+  }
 }
