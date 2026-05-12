@@ -15,13 +15,15 @@ mkdir -p "$DIST_DIR"
 cd "$REPO_ROOT"
 
 export SBT_OPTS="-Dsbt.server.autostart=false"
-sbt -batch "++3.8.3" "miniKanrenExamplesJVM/mdoc" "miniKanrenScala3DSLCrossJVM/mdoc" "miniKanrenLangCrossJVM/mdoc" "miniKanrenWebsite/fullLinkJS"
+sbt -batch "miniKanrenExamplesJVM/mdoc" "miniKanrenWebsite/fullLinkJS"
 
 cp -r "$WEBSITE_SOURCE"/* "$DIST_DIR/"
 
-SITE_APP=$(find "$WEBSITE_TARGET_DIR" -name 'main.js' -path '*/opt/*' -print -quit)
+SITE_APP=$(find "$WEBSITE_TARGET_DIR" -name '*.js' -type f 2>/dev/null | grep -E '(opt|main)' | head -1)
 if [ -z "$SITE_APP" ]; then
-  echo "Error: Could not locate the linked website Scala.js output." >&2
+  echo "Error: Could not locate the linked website Scala.js output in $WEBSITE_TARGET_DIR" >&2
+  echo "Available JS files:" >&2
+  find "$WEBSITE_TARGET_DIR" -name '*.js' -type f 2>/dev/null || echo "No JS files found"
   exit 1
 fi
 
@@ -29,9 +31,7 @@ mkdir -p "$DIST_DIR/assets"
 cp "$SITE_APP" "$DIST_DIR/assets/site-app.js"
 
 declare -a docs_dirs=(
-  "examples:jvm"
-  "scala3dsl"
-  "lang"
+  "examples/jvm:jvm"
 )
 
 for doc_spec in "${docs_dirs[@]}"; do

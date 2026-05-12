@@ -107,18 +107,42 @@ jobs:
           echo "$HOME/.local/share/coursier/bin" >> $GITHUB_PATH
           cs install sbt || ~/.local/bin/cs install sbt
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
+      - name: Check Pages API access
+        id: pages_access
+        uses: actions/github-script@v7
+        continue-on-error: true
         with:
-          enablement: true
+          script: |
+            try {
+              await github.rest.repos.getPages({
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              })
+              core.setOutput('enabled', 'true')
+            } catch (e) {
+              core.warning(`Pages API unavailable for this token: ${e.message}`)
+              core.setOutput('enabled', 'false')
+            }
+
+      - name: Configure Pages
+        if: steps.pages_access.outputs.enabled == 'true'
+        uses: actions/configure-pages@v5
 
       - name: Build static site artifact
         run: bash ./scripts/build-site.sh
 
       - name: Upload Pages artifact
+        if: steps.pages_access.outputs.enabled == 'true'
         uses: actions/upload-pages-artifact@v4
         with:
           path: site-dist
 
       - name: Deploy to GitHub Pages
+        if: steps.pages_access.outputs.enabled == 'true'
         uses: actions/deploy-pages@v4
+
+      - name: Pages deploy skipped
+        if: steps.pages_access.outputs.enabled != 'true'
+        run: |
+          echo "Skipping GitHub Pages deploy: this workflow token cannot access repository Pages settings."
+          echo "Enable Pages once in repository settings (Build and deployment: GitHub Actions) to allow deployments."
