@@ -136,7 +136,7 @@ lazy val miniKanrenScala3DSLCross = crossProject(JSPlatform, JVMPlatform).crossT
 lazy val miniKanrenScala3DSL = miniKanrenScala3DSLCross.jvm.
   enablePlugins(MdocPlugin).
   settings(
-    mdocIn := (Compile / sourceDirectory).value / "mdoc",
+    mdocIn := baseDirectory.value.getParentFile / "src" / "main" / "mdoc",
     mdocOut := target.value / "mdoc",
     initialCommands := """
                          |import info.hircus.kanren.dsl3.Scala3DSL.*
@@ -164,7 +164,7 @@ lazy val miniKanrenLangCross = crossProject(JSPlatform, JVMPlatform).crossType(C
 lazy val miniKanrenLang = miniKanrenLangCross.jvm.
   enablePlugins(MdocPlugin).
   settings(
-    mdocIn := (Compile / sourceDirectory).value / "mdoc",
+    mdocIn := baseDirectory.value.getParentFile / "src" / "main" / "mdoc",
     mdocOut := target.value / "mdoc",
     initialCommands := """
                          |import info.hircus.kanren.lang.MiniKanrenLang

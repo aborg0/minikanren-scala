@@ -11,7 +11,7 @@
 
   function bindLanguagePlayground(elements) {
     elements.runButton.addEventListener("click", function () {
-      var response = window.MiniKanrenWebsite.runLanguage(elements.source.value);
+      var response = MiniKanrenWebsite.runLanguage(elements.source.value);
       setResult(elements, response);
     });
   }
@@ -29,7 +29,7 @@
     });
 
     elements.runButton.addEventListener("click", function () {
-      var response = window.MiniKanrenWebsite.runScala3Demo(elements.select.value, elements.payload.value);
+      var response = MiniKanrenWebsite.runScala3Demo(elements.select.value, elements.payload.value);
       setResult(elements, response);
     });
   }
@@ -37,13 +37,13 @@
   function bindExamplePlayground(elements) {
     elements.runButton.addEventListener("click", function () {
       elements.status.textContent = "Running example...";
-      var response = window.MiniKanrenWebsite.runExample(elements.select.value);
+      var response = MiniKanrenWebsite.runExample(elements.select.value);
       setResult(elements, response);
     });
   }
 
   function renderDocsIndex(root) {
-    var entries = window.MiniKanrenWebsite.docsIndex();
+    var entries = MiniKanrenWebsite.docsIndex();
     root.innerHTML = "";
     entries.forEach(function (entry) {
       var article = document.createElement("article");

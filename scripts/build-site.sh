@@ -15,7 +15,7 @@ mkdir -p "$DIST_DIR"
 cd "$REPO_ROOT"
 
 export SBT_OPTS="-Dsbt.server.autostart=false"
-sbt -batch "miniKanrenExamplesJVM/mdoc" "miniKanrenWebsite/fullLinkJS"
+sbt -batch "miniKanrenExamplesJVM/mdoc" "miniKanrenScala3DSLCrossJVM/mdoc" "miniKanrenLangCrossJVM/mdoc" "miniKanrenWebsite/fullLinkJS"
 
 cp -r "$WEBSITE_SOURCE"/* "$DIST_DIR/"
 
@@ -31,14 +31,13 @@ mkdir -p "$DIST_DIR/assets"
 cp "$SITE_APP" "$DIST_DIR/assets/site-app.js"
 
 declare -a docs_dirs=(
-  "examples/jvm:jvm"
+  "examples/jvm:examples"
+  "scala3dsl/.jvm:scala3dsl"
+  "lang/.jvm:lang"
 )
 
 for doc_spec in "${docs_dirs[@]}"; do
   IFS=':' read -r doc_name doc_suffix <<< "$doc_spec"
-  if [ -z "$doc_suffix" ]; then
-    doc_suffix="$doc_name"
-  fi
   
   SOURCE_DIR="$REPO_ROOT/$doc_name/target/mdoc"
   TARGET_DIR="$DIST_DIR/docs/$doc_suffix"

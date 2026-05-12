@@ -35,8 +35,8 @@ Copy-Item $siteApp.FullName (Join-Path $distDir 'assets\site-app.js') -Force
 
 $docs = @(
   @{ Source = Join-Path $repoRoot 'examples\jvm\target\mdoc'; Target = Join-Path $distDir 'docs\examples' },
-  @{ Source = Join-Path $repoRoot 'scala3dsl\target\mdoc'; Target = Join-Path $distDir 'docs\scala3dsl' },
-  @{ Source = Join-Path $repoRoot 'lang\target\mdoc'; Target = Join-Path $distDir 'docs\lang' }
+  @{ Source = Join-Path $repoRoot 'scala3dsl\.jvm\target\mdoc'; Target = Join-Path $distDir 'docs\scala3dsl' },
+  @{ Source = Join-Path $repoRoot 'lang\.jvm\target\mdoc'; Target = Join-Path $distDir 'docs\lang' }
 )
 
 foreach ($doc in $docs) {
