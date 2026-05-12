@@ -53,6 +53,8 @@ jobs:
           path: |
             ~/.ivy2/cache
             ~/.sbt
+            ~/.cache/coursier
+            ~/.coursier/cache
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt', '**/project/plugins.sbt', '**/project/build.properties') }}
           restore-keys: |
             ${{ runner.os }}-sbt-
