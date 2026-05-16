@@ -16,6 +16,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
@@ -79,6 +82,26 @@ jobs:
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         run: SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.8.3 coveralls
+
+      - name: Publish snapshot artifacts (Scala 2.x JVM + JS)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/cleanup' && matrix.scala != '3.8.3'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        run: >-
+          SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++${{ matrix.scala }} miniKanrenJVM/publish miniKanrenJS/publish
+
+      - name: Publish snapshot artifacts (Scala 3 JVM + JS)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/cleanup' && matrix.scala == '3.8.3'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        run: >-
+          SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.8.3 miniKanrenJVM/publish miniKanrenJS/publish miniKanrenScala3DSLCrossJVM/publish miniKanrenScala3DSLCrossJS/publish miniKanrenLangCrossJVM/publish miniKanrenLangCrossJS/publish
 
   pages:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/cleanup')

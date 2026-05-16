@@ -7,6 +7,17 @@ enablePlugins(ScalaJSPlugin, LaikaPlugin)
 name := "Scala miniKanren root project"
 ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.8.3")
 ThisBuild / scalaVersion := "2.13.18"
+ThisBuild / publishTo := {
+  val owner = sys.env.getOrElse("GITHUB_REPOSITORY_OWNER", "michel-slm")
+  val repo = sys.env.get("GITHUB_REPOSITORY").flatMap(_.split("/").lastOption).getOrElse("minikanren-scala")
+  Some("GitHub Packages" at s"https://maven.pkg.github.com/$owner/$repo")
+}
+ThisBuild / credentials ++= {
+  for {
+    token <- sys.env.get("GITHUB_TOKEN")
+    user <- sys.env.get("GITHUB_ACTOR").orElse(sys.env.get("GITHUB_REPOSITORY_OWNER"))
+  } yield Credentials("GitHub Package Registry", "maven.pkg.github.com", user, token)
+}.toSeq
 
 // This is an application with a main method
 scalaJSUseMainModuleInitializer := true
