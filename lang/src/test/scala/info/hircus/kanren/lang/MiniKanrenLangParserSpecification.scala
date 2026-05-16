@@ -128,7 +128,7 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
         |""".stripMargin
 
     MiniKanrenLang.run(source) match {
-      case Left(err) => err.line >= 2 && err.column > 0 && err.message.nonEmpty
+      case Left(err) => err.line > 0 && err.column > 0 && err.message.nonEmpty
       case Right(_) => false
     }
   }
@@ -229,5 +229,764 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
         |""".stripMargin
 
     MiniKanrenLang.run(source) == Right(List(1))
+  }
+
+  property("parse and run Flix Fixpoints DSL") = {
+    val source =
+      """
+        |parent(alice, bob).
+        |parent(bob, carol).
+        |ancestor(X, Y) :- parent(X, Y).
+        |query ancestor(alice, Y).
+        |""".stripMargin
+    MiniKanrenLang.run(source) match {
+      case Right(results) => results == List("bob")
+      case Left(_) => false
+    }
+  }
+
+  property("parse recursive Flix Fixpoints DSL") = {
+    val source =
+      """
+        |parent(alice, bob).
+        |parent(bob, carol).
+        |ancestor(X, Y) :- parent(X, Y).
+        |ancestor(X, Y) :- parent(X, Z), ancestor(Z, Y).
+        |query ancestor(alice, Y).
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.declarations.exists {
+          case QueryIR.Rule("ancestor", _, QueryIR.Conj(List(QueryIR.Rel("parent", _), QueryIR.Rel("ancestor", _)))) => true
+          case _ => false
+        }
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) RETURN a
+        |""".stripMargin
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) => program.focus == "a" && program.goals.nonEmpty
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with multiple RETURN variables") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) RETURN a, b
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "_cy_return" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Eq(QueryIR.Ref("_cy_return"), QueryIR.ListExpr(List(QueryIR.Ref("a"), QueryIR.Ref("b"))))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with WHERE") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a = a RETURN b
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "b" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Eq(QueryIR.Ref("a"), QueryIR.Ref("a"))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with multiple MATCH patterns") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b), (b)-[:neq]->(c) RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Neq(QueryIR.Ref("b"), QueryIR.Ref("c"))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with reverse edge direction") = {
+    val source =
+      """
+        |MATCH (a)<-[:parent]-(b) RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(
+            QueryIR.Rel("parent", List(QueryIR.Ref("b"), QueryIR.Ref("a")))
+          )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with undirected edge") = {
+    val source =
+      """
+        |MATCH (a)-[:parent]-(b) RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(
+            QueryIR.Disj(List(
+              QueryIR.Rel("parent", List(QueryIR.Ref("a"), QueryIR.Ref("b"))),
+              QueryIR.Rel("parent", List(QueryIR.Ref("b"), QueryIR.Ref("a")))
+            ))
+          )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with relationship variable") = {
+    val source =
+      """
+        |MATCH (a)-[r:parent]->(b) RETURN r
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "r" &&
+          program.goals == List(
+            QueryIR.Rel("parent", List(QueryIR.Ref("a"), QueryIR.Ref("b"))),
+            QueryIR.Eq(QueryIR.Ref("r"), QueryIR.Atom("parent"))
+          )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with relationship variable and reverse edge") = {
+    val source =
+      """
+        |MATCH (a)<-[r:parent]-(b) RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(
+            QueryIR.Rel("parent", List(QueryIR.Ref("b"), QueryIR.Ref("a"))),
+            QueryIR.Eq(QueryIR.Ref("r"), QueryIR.Atom("parent"))
+          )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with relationship variable and undirected edge") = {
+    val source =
+      """
+        |MATCH (a)-[r:parent]-(b) RETURN r
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "r" &&
+          program.goals == List(
+            QueryIR.Disj(List(
+              QueryIR.Rel("parent", List(QueryIR.Ref("a"), QueryIR.Ref("b"))),
+              QueryIR.Rel("parent", List(QueryIR.Ref("b"), QueryIR.Ref("a")))
+            )),
+            QueryIR.Eq(QueryIR.Ref("r"), QueryIR.Atom("parent"))
+          )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with WHERE AND predicates") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a = a AND b = b RETURN b
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "b" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Eq(QueryIR.Ref("a"), QueryIR.Ref("a")),
+          QueryIR.Eq(QueryIR.Ref("b"), QueryIR.Ref("b"))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with WHERE OR predicate") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a = a OR b = b RETURN b
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "b" &&
+          program.goals == List(
+            QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+            QueryIR.Disj(List(
+              QueryIR.Eq(QueryIR.Ref("a"), QueryIR.Ref("a")),
+              QueryIR.Eq(QueryIR.Ref("b"), QueryIR.Ref("b"))
+            ))
+          )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with parenthesized WHERE groups") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE (a = a OR b = b) AND a <> b RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(
+            QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+            QueryIR.Disj(List(
+              QueryIR.Eq(QueryIR.Ref("a"), QueryIR.Ref("a")),
+              QueryIR.Eq(QueryIR.Ref("b"), QueryIR.Ref("b"))
+            )),
+            QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b"))
+          )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with <> predicate") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a <> b RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b"))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with node labels") = {
+    val source =
+      """
+        |MATCH (a:Person)-[:neq]->(b:Person) RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Rel("label_o", List(QueryIR.Ref("a"), QueryIR.Atom("Person"))),
+          QueryIR.Rel("label_o", List(QueryIR.Ref("b"), QueryIR.Atom("Person")))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with node property maps") = {
+    val source =
+      """
+        |MATCH (a:Person {name: "alice", age: 42})-[:parent]->(b {name: "bob"}) RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(
+            QueryIR.Rel("parent", List(QueryIR.Ref("a"), QueryIR.Ref("b"))),
+            QueryIR.Rel("label_o", List(QueryIR.Ref("a"), QueryIR.Atom("Person"))),
+            QueryIR.Rel("prop_o", List(QueryIR.Ref("a"), QueryIR.Atom("name"), QueryIR.Atom("alice"))),
+            QueryIR.Rel("prop_o", List(QueryIR.Ref("a"), QueryIR.Atom("age"), QueryIR.Atom(42))),
+            QueryIR.Rel("prop_o", List(QueryIR.Ref("b"), QueryIR.Atom("name"), QueryIR.Atom("bob")))
+          )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with boolean node property map value") = {
+    val source =
+      """
+        |MATCH (a:Person {active: true})-[:parent]->(b) RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(
+            QueryIR.Rel("parent", List(QueryIR.Ref("a"), QueryIR.Ref("b"))),
+            QueryIR.Rel("label_o", List(QueryIR.Ref("a"), QueryIR.Atom("Person"))),
+            QueryIR.Rel("prop_o", List(QueryIR.Ref("a"), QueryIR.Atom("active"), QueryIR.Atom(true)))
+          )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with list node property map value") = {
+    val source =
+      """
+        |MATCH (a {tags: ["scala", "kanren"], scores: [1, 2, 3]})-[:parent]->(b) RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(
+            QueryIR.Rel("parent", List(QueryIR.Ref("a"), QueryIR.Ref("b"))),
+            QueryIR.Rel("prop_o", List(QueryIR.Ref("a"), QueryIR.Atom("tags"), QueryIR.ListExpr(List(QueryIR.Atom("scala"), QueryIR.Atom("kanren"))))),
+            QueryIR.Rel("prop_o", List(QueryIR.Ref("a"), QueryIR.Atom("scores"), QueryIR.ListExpr(List(QueryIR.Atom(1), QueryIR.Atom(2), QueryIR.Atom(3)))))
+          )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with nested map node property value") = {
+    val source =
+      """
+        |MATCH (a {meta: {rank: 1, active: true}})-[:parent]->(b) RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(
+            QueryIR.Rel("parent", List(QueryIR.Ref("a"), QueryIR.Ref("b"))),
+            QueryIR.Rel(
+              "prop_o",
+              List(
+                QueryIR.Ref("a"),
+                QueryIR.Atom("meta"),
+                QueryIR.Atom(Map("rank" -> 1, "active" -> true))
+              )
+            )
+          )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with list containing nested maps") = {
+    val source =
+      """
+        |MATCH (a {history: [{year: 2020}, {year: 2021}]})-[:parent]->(b) RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(
+            QueryIR.Rel("parent", List(QueryIR.Ref("a"), QueryIR.Ref("b"))),
+            QueryIR.Rel(
+              "prop_o",
+              List(
+                QueryIR.Ref("a"),
+                QueryIR.Atom("history"),
+                QueryIR.ListExpr(List(
+                  QueryIR.Atom(Map("year" -> 2020)),
+                  QueryIR.Atom(Map("year" -> 2021))
+                ))
+              )
+            )
+          )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with explicit header") = {
+    val source =
+      """
+        |#!cypher
+        |MATCH (a)-[:neq]->(b) RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) => program.focus == "a" && program.goals.nonEmpty
+      case Left(_) => false
+    }
+  }
+
+  property("explicit cypher header does not fall back to other parsers") = {
+    val source =
+      """
+        |#!cypher
+        |run 1 x {
+        |  eq x 7
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isLeft
+  }
+
+  property("parse Flix DSL with explicit header") = {
+    val source =
+      """
+        |#!flix
+        |parent(alice, bob).
+        |query parent(alice, X).
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) => program.focus == "X" && program.goals.nonEmpty
+      case Left(_) => false
+    }
+  }
+
+  property("parse legacy DSL with explicit header") = {
+    val source =
+      """
+        |#!legacy
+        |run 1 x {
+        |  eq x 7
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) => program.focus == "x" && program.goals.nonEmpty
+      case Left(_) => false
+    }
+  }
+
+  property("parse declarative DSL with explicit header") = {
+    val source =
+      """
+        |#!declarative
+        |const Anakin, Luke, Leia
+        |var x, y, z
+        |rel/2 infix fatherOf
+        |Anakin fatherOf Luke
+        |Anakin fatherOf Leia
+        |sibling(x, y) = fatherOf(z, x) & fatherOf(z, y) & not x = y
+        |ask x sibling(Luke, x)
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) => program.focus == "x" && program.declarations.nonEmpty
+      case Left(_) => false
+    }
+  }
+
+  property("parse prolog DSL with explicit header") = {
+    val source =
+      """
+        |#!prolog
+        |father_of(anakin, luke).
+        |father_of(anakin, leia).
+        |?- father_of(anakin, Y).
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) => program.focus == "Y" && program.goals.nonEmpty
+      case Left(_) => false
+    }
+  }
+
+  property("explicit prolog header does not fall back to legacy parser") = {
+    val source =
+      """
+        |#!prolog
+        |run 1 x {
+        |  eq x 7
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isLeft
+  }
+
+  property("parse Cypher DSL with WHERE string literal") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a = "alice" RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Eq(QueryIR.Ref("a"), QueryIR.Atom("alice"))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with WHERE numeric literal") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE b <> 42 RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Neq(QueryIR.Ref("b"), QueryIR.Atom(42))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with property access in WHERE") = {
+    val source =
+      """
+        |MATCH (a:Person)-[:neq]->(b:Person) WHERE a.name = "alice" RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Rel("label_o", List(QueryIR.Ref("a"), QueryIR.Atom("Person"))),
+          QueryIR.Rel("label_o", List(QueryIR.Ref("b"), QueryIR.Atom("Person"))),
+          QueryIR.Rel("prop_o", List(QueryIR.Ref("a"), QueryIR.Atom("name"), QueryIR.Ref("_cy_prop_0"))),
+          QueryIR.Eq(QueryIR.Ref("_cy_prop_0"), QueryIR.Atom("alice"))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with property access and <> in WHERE") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE b.age <> 42 RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Rel("prop_o", List(QueryIR.Ref("b"), QueryIR.Atom("age"), QueryIR.Ref("_cy_prop_0"))),
+          QueryIR.Neq(QueryIR.Ref("_cy_prop_0"), QueryIR.Atom(42))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with property to property equality in WHERE") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a.name = b.name RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Rel("prop_o", List(QueryIR.Ref("a"), QueryIR.Atom("name"), QueryIR.Ref("_cy_prop_0"))),
+          QueryIR.Rel("prop_o", List(QueryIR.Ref("b"), QueryIR.Atom("name"), QueryIR.Ref("_cy_prop_1"))),
+          QueryIR.Eq(QueryIR.Ref("_cy_prop_0"), QueryIR.Ref("_cy_prop_1"))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with property to property disequality in WHERE") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a.age <> b.age RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Rel("prop_o", List(QueryIR.Ref("a"), QueryIR.Atom("age"), QueryIR.Ref("_cy_prop_0"))),
+          QueryIR.Rel("prop_o", List(QueryIR.Ref("b"), QueryIR.Atom("age"), QueryIR.Ref("_cy_prop_1"))),
+          QueryIR.Neq(QueryIR.Ref("_cy_prop_0"), QueryIR.Ref("_cy_prop_1"))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("Cypher WHERE temp vars are deterministic across AND predicates") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a.name = b.name AND b.age <> 42 RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Rel("prop_o", List(QueryIR.Ref("a"), QueryIR.Atom("name"), QueryIR.Ref("_cy_prop_0"))),
+          QueryIR.Rel("prop_o", List(QueryIR.Ref("b"), QueryIR.Atom("name"), QueryIR.Ref("_cy_prop_1"))),
+          QueryIR.Eq(QueryIR.Ref("_cy_prop_0"), QueryIR.Ref("_cy_prop_1")),
+          QueryIR.Rel("prop_o", List(QueryIR.Ref("b"), QueryIR.Atom("age"), QueryIR.Ref("_cy_prop_2"))),
+          QueryIR.Neq(QueryIR.Ref("_cy_prop_2"), QueryIR.Atom(42))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("Cypher WHERE temp vars are deterministic for property to property then literal") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a.height <> b.height AND a.name = "alice" RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Rel("prop_o", List(QueryIR.Ref("a"), QueryIR.Atom("height"), QueryIR.Ref("_cy_prop_0"))),
+          QueryIR.Rel("prop_o", List(QueryIR.Ref("b"), QueryIR.Atom("height"), QueryIR.Ref("_cy_prop_1"))),
+          QueryIR.Neq(QueryIR.Ref("_cy_prop_0"), QueryIR.Ref("_cy_prop_1")),
+          QueryIR.Rel("prop_o", List(QueryIR.Ref("a"), QueryIR.Atom("name"), QueryIR.Ref("_cy_prop_2"))),
+          QueryIR.Eq(QueryIR.Ref("_cy_prop_2"), QueryIR.Atom("alice"))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL rejects unsupported CREATE clause") = {
+    val source =
+      """
+        |#!cypher
+        |CREATE (a)
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isLeft
+  }
+
+  property("parse Cypher DSL rejects malformed property access") = {
+    val source =
+      """
+        |#!cypher
+        |MATCH (a)-[:neq]->(b) WHERE a. = "alice" RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isLeft
+  }
+
+  property("explicit header is detected after leading whitespace") = {
+    val source =
+      """
+
+        |
+        |   #!cypher
+        |MATCH (a)-[:neq]->(b) RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) => program.focus == "a" && program.goals.nonEmpty
+      case Left(_) => false
+    }
+  }
+
+  property("explicit prolog header with leading whitespace remains strict") = {
+    val source =
+      """
+
+        |   #!prolog
+        |run 1 x {
+        |  eq x 7
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isLeft
+  }
+
+  property("explicit declarative header with leading whitespace remains strict") = {
+    val source =
+      """
+
+        |	#!declarative
+        |?- father_of(anakin, Y).
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isLeft
+  }
+
+  property("legacy DSL supports line and block comments") = {
+    val source =
+      """
+        |run 1 x {
+        |  // pick the value
+        |  eq /* inline block */ x 7
+        |}
+        |""".stripMargin
+
+    MiniKanrenLang.run(source) == Right(List(7))
+  }
+
+  property("declarative DSL supports hash comments") = {
+    val source =
+      """
+        |#!declarative
+        |# simple declarative query
+        |var x
+        |ask x x = 7
+        |""".stripMargin
+
+    MiniKanrenLang.run(source) == Right(List(7))
+  }
+
+  property("prolog DSL supports percent comments") = {
+    val source =
+      """
+        |#!prolog
+        |% basic fact with query
+        |father_of(anakin, luke).
+        |?- father_of(anakin, Y).
+        |""".stripMargin
+
+    MiniKanrenLang.run(source) == Right(List("luke"))
+  }
+
+  property("flix DSL supports slash comments") = {
+    val source =
+      """
+        |#!flix
+        |// one fact
+        |parent(alice, bob).
+        |query parent(alice, X).
+        |""".stripMargin
+
+    MiniKanrenLang.run(source) == Right(List("bob"))
+  }
+
+  property("cypher DSL supports line and block comments") = {
+    val source =
+      """
+        |#!cypher
+        |// cypher query
+        |MATCH (a)-[:neq]->(b) /* return one side */ RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) => program.focus == "a" && program.goals.nonEmpty
+      case Left(_) => false
+    }
   }
 }

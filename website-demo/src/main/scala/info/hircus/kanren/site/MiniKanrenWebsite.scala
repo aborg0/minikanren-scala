@@ -48,6 +48,14 @@ object MiniKanrenWebsite {
         val left = parseCsv(config.getOrElse("left", "1, 2"))
         val right = parseCsv(config.getOrElse("right", "3, 4"))
         runList(query(focus).withLimit(1).where(append(list(left*), list(right*), focus)))
+      case "reify_recursive" =>
+        val q = v("q")
+        val n = parseScalar(payload).asInstanceOf[Int]
+        runList(query(q).where(
+          if (n >= 2) any(q === 1, q === 2)
+          else if (n >= 1) q === 1
+          else any() // fail
+        ))
       case other =>
         return js.Dynamic.literal(
           ok = false,
@@ -64,7 +72,8 @@ object MiniKanrenWebsite {
     val q = make_var(Symbol("q"))
     val results = exampleId match {
       case "send-more-money" => MiniKanren.run(1, q)(SendMoreMoney.solve_puzzle(q))
-      case "palprod" => MiniKanren.run(1, q)(PalProd.palprod_o(q))
+      // Palindrome product is a known heavy query; maprun is substantially faster than run.
+      case "palprod" => MiniKanren.maprun(1, q)(PalProd.palprod_o(q))
       case other =>
         return js.Dynamic.literal(
           ok = false,

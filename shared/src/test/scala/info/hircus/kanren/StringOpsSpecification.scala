@@ -69,7 +69,6 @@ object StringOpsSpecification extends Properties("StringOps") {
 
   property("sub_atom extracts substring") = {
     val x = make_var(Symbol("x"))
-    val y = make_var(Symbol("y"))
     val z = make_var(Symbol("z"))
     val results = run(-1, x)(StringOps.sub_atom("hello", 1, 3, z, x))
     results.contains("ell")

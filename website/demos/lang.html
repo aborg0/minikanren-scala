@@ -19,6 +19,21 @@
 
     <section class="playground-layout">
       <article class="card playground-card">
+        <label class="control-label" for="lang-demo">Template</label>
+        <select id="lang-demo" class="select-input">
+          <option value="legacy">Legacy (Default)</option>
+          <option value="declarative">Declarative</option>
+          <option value="prolog">Prolog</option>
+          <option value="flix">Flix (Fixpoints)</option>
+          <option value="cypher">Cypher (Graph)</option>
+          <option value="kinship">Prolog Kinship</option>
+          <option value="reachability">Cypher Reachability</option>
+          <option value="list_ops">Declarative List Ops</option>
+          <option value="append_o">Prolog Append (Reverse)</option>
+          <option value="zebra_mini">Declarative logic</option>
+          <option value="cypher_filter">Cypher Filtering</option>
+        </select>
+
         <label class="control-label" for="lang-source">Program</label>
         <textarea id="lang-source" class="editor" spellcheck="false">run -1 x {
   member_o(x, [1, 2, 3])
@@ -40,6 +55,7 @@
   <script src="../assets/site.js"></script>
   <script>
     window.SitePages.bindLanguagePlayground({
+      select: document.getElementById('lang-demo'),
       runButton: document.getElementById('lang-run'),
       source: document.getElementById('lang-source'),
       status: document.getElementById('lang-status'),
