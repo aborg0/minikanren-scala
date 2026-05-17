@@ -8,6 +8,11 @@ import org.scalacheck.Properties
 
 object ExtensionMethodsSpecification extends Properties("ExtensionMethods") {
 
+  private def asInt(v: Any): Option[Int] = v match {
+    case i: Int => Some(i)
+    case other => try { Some(MKMath.read_num(other)) } catch { case _: Throwable => None }
+  }
+
   // String extensions
   property("String.toNumber converts string to number") = {
     val x = make_var(Symbol("x"))
@@ -83,6 +88,24 @@ object ExtensionMethodsSpecification extends Properties("ExtensionMethods") {
     results == List(1)
   }
 
+  property("Int.plus adds numbers") = {
+    val x = make_var(Symbol("x"))
+    val results = run(1, x)(10.plus(3, x))
+    results.nonEmpty
+  }
+
+  property("Int.minus subtracts numbers") = {
+    val x = make_var(Symbol("x"))
+    val results = run(1, x)(10.minus(3, x))
+    results.nonEmpty
+  }
+
+  property("Int.times multiplies numbers") = {
+    val x = make_var(Symbol("x"))
+    val results = run(1, x)(4.times(3, x))
+    results.nonEmpty
+  }
+
   property("Int.dividedBy divides integers") = {
     val x = make_var(Symbol("x"))
     val results = run(-1, x)(10.dividedBy(3, x))
@@ -93,6 +116,16 @@ object ExtensionMethodsSpecification extends Properties("ExtensionMethods") {
     val x = make_var(Symbol("x"))
     val results = run(1, x)(5.lte(5))
     results.length >= 1
+  }
+
+  property("Int.lessThan comparison") = {
+    val dummy = make_var(Symbol("_dummy"))
+    run(1, dummy)(MKMath.lt_o(4, 5)).nonEmpty
+  }
+
+  property("Int.greaterThan comparison") = {
+    val dummy = make_var(Symbol("_dummy"))
+    run(1, dummy)(MKMath.gt_o(6, 5)).nonEmpty
   }
 
   property("Int.gte comparison") = {

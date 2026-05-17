@@ -362,7 +362,7 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
     }
   }
 
-  property("parse recursive Flix Fixpoints DSL") = {
+  property("parse and run recursive Flix Fixpoints DSL") = {
     val source =
       """
         |parent(alice, bob).
@@ -372,14 +372,7 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
         |query ancestor(alice, Y).
         |""".stripMargin
 
-    MiniKanrenLangParser.parse(source) match {
-      case Right(program) =>
-        program.declarations.exists {
-          case QueryIR.Rule("ancestor", _, QueryIR.Conj(List(QueryIR.Rel("parent", _), QueryIR.Rel("ancestor", _)))) => true
-          case _ => false
-        }
-      case Left(_) => false
-    }
+    MiniKanrenLang.run(source) == Right(List("bob", "carol"))
   }
 
   property("parse Cypher DSL") = {

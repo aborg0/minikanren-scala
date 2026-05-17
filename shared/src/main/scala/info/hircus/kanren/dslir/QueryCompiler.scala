@@ -214,7 +214,10 @@ object QueryCompiler {
       val compiledArgs = args.map(compileExpr(_, env, constants))
       compileBuiltinRelation(name, compiledArgs).getOrElse {
         declarations.get(name) match {
-          case Some(defs) => compileUserDefinedRelation(name, compiledArgs, env, constants, defs, declarations)
+          case Some(defs) =>
+            // Defer user-defined relation expansion so recursive rules are not unfolded eagerly at compile time.
+            lazy val compiled = compileUserDefinedRelation(name, compiledArgs, env, constants, defs, declarations)
+            (s: MiniKanren.Subst) => compiled(s)
           case None => throw new IllegalArgumentException("Unknown relation: " + name)
         }
       }

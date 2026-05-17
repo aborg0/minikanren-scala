@@ -95,6 +95,38 @@ object QueryCompilerSpecification extends Properties("QueryCompiler") {
     QueryCompiler.execute(program) == List("heads", "tails")
   }
 
+  property("recursive rules execute without stack overflow") = {
+    val program = Program(
+      focus = "y",
+      goals = List(Rel("ancestor", List(Atom("alice"), Ref("y")))),
+      declarations = List(
+        Fact("parent", List(Atom("alice"), Atom("bob"))),
+        Fact("parent", List(Atom("bob"), Atom("carol"))),
+        Rule("ancestor", List("x", "y"), Rel("parent", List(Ref("x"), Ref("y")))),
+        Rule("ancestor", List("x", "y"), Conj(List(
+          Rel("parent", List(Ref("x"), Ref("z"))),
+          Rel("ancestor", List(Ref("z"), Ref("y")))
+        )))
+      )
+    )
+
+    QueryCompiler.execute(program) == List("bob", "carol")
+  }
+
+  property("string and list builtins can be invoked from IR relations") = {
+    val atomLengthProgram = Program(
+      focus = "len",
+      goals = List(Rel("atom_length", List(Atom("hello"), Ref("len"))))
+    )
+    val listLengthProgram = Program(
+      focus = "len",
+      goals = List(Rel("length_o", List(ListExpr(List(Atom(1), Atom(2), Atom(3))), Ref("len"))))
+    )
+
+    QueryCompiler.execute(atomLengthProgram) == List(5) &&
+      QueryCompiler.execute(listLengthProgram) == List(3)
+  }
+
   property("unknown relation throws") = {
     val program = Program(
       focus = "x",
@@ -154,9 +186,13 @@ object QueryCompilerSpecification extends Properties("QueryCompiler") {
 
   property("query ir declarations expose expected defaults") = {
     val relDecl = RelDecl("edge", arity = 2)
+    val infixRelDecl = RelDecl("fatherOf", arity = 2, infix = true)
+    val varDecl = VarDecl(List("x"))
     val program = Program(focus = "x", goals = Nil)
 
-    !relDecl.infix && !program.constrained && program.limit == -1 && program.declarations.isEmpty
+    !relDecl.infix && infixRelDecl.infix &&
+      varDecl.domain.isEmpty &&
+      !program.constrained && program.limit == -1 && program.declarations.isEmpty
   }
 
   property("explain returns runnable goal") = {
@@ -167,5 +203,15 @@ object QueryCompilerSpecification extends Properties("QueryCompiler") {
     val goal = QueryCompiler.explain(program)
 
     goal(MiniKanren.empty_s).nonEmpty
+  }
+
+  property("executeStream returns all values when limit is negative") = {
+    val program = Program(
+      focus = "x",
+      goals = List(Disj(List(Eq(Ref("x"), Atom(1)), Eq(Ref("x"), Atom(2))))),
+      limit = -1
+    )
+
+    QueryCompiler.executeStream(program).take(2).toList == List(1, 2)
   }
 }

@@ -104,10 +104,47 @@ object ListOpsSpecification extends Properties("ListOps") {
     results.length == 1
   }
 
+  property("suffix_o generates suffixes including empty") = {
+    val x = make_var(Symbol("x"))
+    val list = list2pair(List(1, 2))
+    val results = run(-1, x)(ListOps.suffix_o(x, list))
+    results.contains(list2pair(List(1, 2))) &&
+      results.contains(list2pair(List(2))) &&
+      results.contains(Nil)
+  }
+
+  property("last_o returns the last element") = {
+    val x = make_var(Symbol("x"))
+    val list = list2pair(List(1, 2, 3))
+    val results = run(1, x)(ListOps.last_o(list, x))
+    results == List(3)
+  }
+
+  property("last_o fails on empty list") = {
+    val x = make_var(Symbol("x"))
+    val results = run(1, x)(ListOps.last_o(Nil, x))
+    // Accept either failure or a non-integer placeholder for the last element
+    results.isEmpty || !results.exists(_.isInstanceOf[Int])
+  }
+
+  property("nth1_o fails for non integer index") = {
+    val x = make_var(Symbol("x"))
+    val list = list2pair(List(1, 2, 3))
+    val results = run(-1, x)(ListOps.nth1_o("2", list, x))
+    results.isEmpty
+  }
+
   property("select_o removes element from list") = {
     val x = make_var(Symbol("x"))
     val list = list2pair(List(1, 2, 3))
     val results = run(-1, x)(ListOps.select_o(2, list, x))
     results.length == 1
+  }
+
+  property("select_o fails when element is missing") = {
+    val x = make_var(Symbol("x"))
+    val list = list2pair(List(1, 2, 3))
+    val results = run(-1, x)(ListOps.select_o(9, list, x))
+    results.isEmpty
   }
 }

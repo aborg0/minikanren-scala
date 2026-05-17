@@ -95,7 +95,11 @@ object StringOps {
     * @param str a string or variable
     */
   def atom_string(atom: Any, str: Any): Goal = {
-    mkEqual(atom.toString, str.toString)
+    (atom, str) match {
+      case (a: String, _) => mkEqual(a, str)
+      case (_, s: String) => mkEqual(s, atom)
+      case _ => mkEqual(atom, str)
+    }
   }
 
   /**

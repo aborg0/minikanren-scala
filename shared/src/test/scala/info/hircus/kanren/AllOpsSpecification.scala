@@ -86,4 +86,75 @@ object AllOpsSpecification extends Properties("AllOps") {
     val reconstructed = pair2list(pair)
     reconstructed == list
   }
+
+  property("core goal combinators available from AllOps") = {
+    val x = make_var(Symbol("x"))
+    val succeedResult = run(1, x)(all(succeed, mkEqual(x, 7)))
+    val failResult = run(1, x)(all(fail, mkEqual(x, 7)))
+    val anyResult = run(-1, x)(any_e(mkEqual(x, 1), mkEqual(x, 2)))
+    val bothResult = run(1, x)(both(mkEqual(x, 5), mkEqual(x, 5)))
+    val ifResult = run(1, x)(if_e(mkEqual(1, 1), mkEqual(x, 9), mkEqual(x, 0)))
+
+    succeedResult == List(7) &&
+      failResult.isEmpty &&
+      anyResult == List(1, 2) &&
+      bothResult == List(5) &&
+      ifResult == List(9)
+  }
+
+  property("prelude and list wrappers available from AllOps") = {
+    val pair = list2pair(List(1, 2, 3))
+
+    val h = make_var(Symbol("h"))
+    val t = make_var(Symbol("t"))
+    val c = make_var(Symbol("c"))
+    val n0 = make_var(Symbol("n0"))
+    val n1 = make_var(Symbol("n1"))
+    val last = make_var(Symbol("last"))
+    val selectedRest = make_var(Symbol("selectedRest"))
+
+    val carResult = run(1, h)(car_o(pair, h))
+    val cdrResult = run(1, t)(cdr_o(pair, t))
+    val pairResult = run(1, c)(all(pair_o(pair), mkEqual(c, "ok")))
+    val nullResult = run(1, c)(all(null_o(Nil), mkEqual(c, "ok")))
+    val listResult = run(1, c)(all(list_o(pair), mkEqual(c, "ok")))
+    val nth0Result = run(1, n0)(nth0_o(0, pair, n0))
+    val nth1Result = run(1, n1)(nth1_o(2, pair, n1))
+    val lastResult = run(1, last)(last_o(pair, last))
+    val prefixResult = run(1, c)(all(prefix_o(list2pair(List(1, 2)), pair), mkEqual(c, "ok")))
+    val suffixResult = run(1, c)(all(suffix_o(list2pair(List(2, 3)), pair), mkEqual(c, "ok")))
+    val selectResult = run(1, selectedRest)(select_o(2, pair, selectedRest))
+
+    carResult == List(1) &&
+      cdrResult == List(list2pair(List(2, 3))) &&
+      pairResult == List("ok") &&
+      nullResult == List("ok") &&
+      listResult == List("ok") &&
+      nth0Result == List(1) &&
+      nth1Result == List(2) &&
+      lastResult == List(3) &&
+      prefixResult == List("ok") &&
+      suffixResult == List("ok") &&
+      selectResult == List(list2pair(List(1, 3)))
+  }
+
+  property("string wrappers available from AllOps") = {
+    val x = make_var(Symbol("x"))
+
+    val codesResult = run(1, x)(atom_codes("ab", x))
+    val charsResult = run(1, x)(atom_chars("ab", x))
+    val lengthResult = run(1, x)(atom_length("hello", x))
+    val stringResult = run(1, x)(atom_string("hello", x))
+    val subAtomResult = run(1, x)(sub_atom("banana", 1, 3, 2, x))
+    val upcaseResult = run(1, x)(upcase_atom("hello", x))
+    val downcaseResult = run(1, x)(downcase_atom("HELLO", x))
+
+    codesResult.nonEmpty &&
+      charsResult.nonEmpty &&
+      lengthResult == List(5) &&
+      stringResult == List("hello") &&
+      subAtomResult == List("ana") &&
+      upcaseResult == List("HELLO") &&
+      downcaseResult == List("hello")
+  }
 }

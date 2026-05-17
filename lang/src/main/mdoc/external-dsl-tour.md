@@ -271,7 +271,7 @@ val flixSource =
 MiniKanrenLangParser.parse(flixSource)
 ```
 
-```scala mdoc:crash
+```scala mdoc
 val recursiveFlixRunSource =
   """
     |parent(alice, bob).
