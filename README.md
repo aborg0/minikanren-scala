@@ -65,7 +65,7 @@ The project currently supports multiple ways to write miniKanren queries.
 | --- | --- | --- | --- |
 | Core Scala API (`MiniKanren`, `Prelude`, `AllOps`) | Full engine access and low-level control | `run(-1, x)(member_o(x, list2pair(List(1, 2, 3))))` | Most direct mapping to core relations and substitutions |
 | Scala 3 DSL (`Scala3DSL`) | Idiomatic Scala 3 query authoring | `run(v("x"), -1)(contains(v("x"), list(1, 2, 3))).toList` | Extension methods (`===`, `=/=`), readable relation aliases, normalized list output |
-| External DSL (`MiniKanrenLang`) | User-facing scriptable syntax and parser experimentation | `run -1 x { member_o(x, [1, 2, 3]) }` | Multiple modes: classic `run {}`, declarative infix, Prolog-like, Flix-like, Cypher-like |
+| External DSL (`MiniKanrenLang`) | User-facing scriptable syntax and parser experimentation | `run -1 x { member_o(x, [1, 2, 3]) }` | Multiple modes: classic `run {}`, declarative infix, Prolog-like, Flix-like, Cypher-like; numeric relations accept plain numbers and return numeric results |
 
 Useful documentation entry points:
 

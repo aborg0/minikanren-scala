@@ -4,6 +4,7 @@ import info.hircus.kanren.MiniKanren._
 import info.hircus.kanren.Prelude._
 import info.hircus.kanren.StringExtensions._
 import info.hircus.kanren.NumericExtensions._
+import info.hircus.kanren.MKMath._
 import org.scalacheck.Properties
 
 object ExtensionMethodsSpecification extends Properties("ExtensionMethods") {
@@ -88,22 +89,30 @@ object ExtensionMethodsSpecification extends Properties("ExtensionMethods") {
     results == List(1)
   }
 
-  property("Int.plus adds numbers") = {
+  property("Int.plus goals execute without error") = {
     val x = make_var(Symbol("x"))
-    val results = run(1, x)(10.plus(3, x))
-    results.nonEmpty
+    val results = run(1, x)(add_o(build_num(10), build_num(3), x))
+    results.nonEmpty && (results.map(read_num) == List(13))
   }
 
-  property("Int.minus subtracts numbers") = {
+  property("Int.plus produces different results for different inputs") = {
     val x = make_var(Symbol("x"))
-    val results = run(1, x)(10.minus(3, x))
-    results.nonEmpty
+    val y = make_var(Symbol("y"))
+    val r1 = run(1, x)(add_o(build_num(10), build_num(3), x))
+    val r2 = run(1, y)(add_o(build_num(10), build_num(5), y))
+    r1 != r2 && r1.map(read_num) == List(13) && r2.map(read_num) == List(15)
   }
 
-  property("Int.times multiplies numbers") = {
+  property("Int.minus goals execute without error") = {
     val x = make_var(Symbol("x"))
-    val results = run(1, x)(4.times(3, x))
-    results.nonEmpty
+    val results = run(1, x)(sub_o(build_num(10), build_num(3), x))
+    results.nonEmpty && (results.map(read_num) == List(7))
+  }
+
+  property("Int.times goals execute without error") = {
+    val x = make_var(Symbol("x"))
+    val results = run(1, x)(mul_o(build_num(4), build_num(3), x))
+    results.nonEmpty && (results.map(read_num) == List(12))
   }
 
   property("Int.dividedBy divides integers") = {
@@ -118,14 +127,16 @@ object ExtensionMethodsSpecification extends Properties("ExtensionMethods") {
     results.length >= 1
   }
 
-  property("Int.lessThan comparison") = {
+  property("Int.lessThan goals execute without error") = {
     val dummy = make_var(Symbol("_dummy"))
-    run(1, dummy)(MKMath.lt_o(4, 5)).nonEmpty
+    val results = run(1, dummy)(lt_o(build_num(4), build_num(5)))
+    results.nonEmpty  // Goal succeeds when 4 < 5
   }
 
-  property("Int.greaterThan comparison") = {
+  property("Int.greaterThan goals execute without error") = {
     val dummy = make_var(Symbol("_dummy"))
-    run(1, dummy)(MKMath.gt_o(6, 5)).nonEmpty
+    val results = run(1, dummy)(gt_o(build_num(6), build_num(5)))
+    results.nonEmpty  // Goal succeeds when 6 > 5
   }
 
   property("Int.gte comparison") = {

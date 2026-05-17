@@ -154,6 +154,16 @@ Notes:
 - Variables are uppercase (for example `X`, `Y`, `Z`).
 - Atoms are lowercase (for example `anakin`, `leia`).
 - List head-tail deconstruction works in terms, for example `eq([H|T], [1,2,3])`.
+- Numeric built-ins accept plain numeric literals and report plain numeric results (no bit-list literals required).
+
+```scala mdoc
+val prologArithmeticSource =
+  """
+    |?- X = 2 + 3.
+    |""".stripMargin
+
+MiniKanrenLang.run(prologArithmeticSource)
+```
 
 ## String and Number Built-ins
 
@@ -269,6 +279,18 @@ val flixSource =
     |""".stripMargin
 
 MiniKanrenLangParser.parse(flixSource)
+```
+
+Flix facts also accept numeric literals directly:
+
+```scala mdoc
+val flixNumericSource =
+  """
+    |score(alice, 42).
+    |query score(alice, X).
+    |""".stripMargin
+
+MiniKanrenLang.run(flixNumericSource)
 ```
 
 ```scala mdoc

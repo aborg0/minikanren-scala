@@ -341,7 +341,7 @@ object MiniKanrenLangParser {
   private def flixBodyGoal[$: P]: P[Goal] = P(flixRelGoal)
 
   private def flixFact[$: P]: P[Declaration] =
-    P(lowerIdent ~ "(" ~ ws ~ flixAtomTerm.rep(sep = ws ~ "," ~ ws) ~ ws ~ ")" ~ ws ~ ".").map {
+    P(lowerIdent ~ "(" ~ ws ~ flixTerm.rep(sep = ws ~ "," ~ ws) ~ ws ~ ")" ~ ws ~ ".").map {
       case (name, args) => QueryIR.Fact(name, args.toList)
     }
 

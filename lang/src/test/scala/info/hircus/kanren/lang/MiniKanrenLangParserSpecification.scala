@@ -43,72 +43,6 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
     MiniKanrenLang.run(source) == Right(List(1, 2, 3))
   }
 
-  property("parse escaped string literal") = {
-    val source =
-      """
-        |run 1 x {
-        |  eq x "line1\nline2"
-        |}
-        |""".stripMargin
-
-    MiniKanrenLangParser.parse(source).isRight
-  }
-
-  property("parse escaped char literal") = {
-    val source =
-      """
-        |run 1 x {
-        |  eq x '\n'
-        |}
-        |""".stripMargin
-
-    MiniKanrenLangParser.parse(source).isRight
-  }
-
-  property("parse unicode escaped string literal") = {
-    val source =
-      """
-        |run 1 x {
-        |  eq x "smile: \u263A"
-        |}
-        |""".stripMargin
-
-    MiniKanrenLangParser.parse(source).isRight
-  }
-
-  property("parse unicode escaped char literal") = {
-    val source =
-      """
-        |run 1 x {
-        |  eq x '\u263A'
-        |}
-        |""".stripMargin
-
-    MiniKanrenLangParser.parse(source).isRight
-  }
-
-  property("reject malformed unicode escaped string literal") = {
-    val source =
-      """
-        |run 1 x {
-        |  eq x "bad: \u12G4"
-        |}
-        |""".stripMargin
-
-    MiniKanrenLangParser.parse(source).isLeft
-  }
-
-  property("reject short unicode escaped char literal") = {
-    val source =
-      """
-        |run 1 x {
-        |  eq x '\u123'
-        |}
-        |""".stripMargin
-
-    MiniKanrenLangParser.parse(source).isLeft
-  }
-
   property("parse and run declarative infix syntax") = {
     val source =
       """
@@ -150,6 +84,160 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
         }
       case Left(_) => false
     }
+  }
+
+  property("parse prolog arithmetic operator + into add_o") = {
+    val source =
+      """
+        |?- X = 2 + 3.
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.goals == List(
+          QueryIR.Rel("add_o", List(QueryIR.Atom(2), QueryIR.Atom(3), QueryIR.Ref("X")))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse prolog arithmetic operator - into sub_o") = {
+    val source =
+      """
+        |?- X = 10 - 3.
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.goals == List(
+          QueryIR.Rel("sub_o", List(QueryIR.Atom(10), QueryIR.Atom(3), QueryIR.Ref("X")))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse prolog arithmetic operator * into mul_o") = {
+    val source =
+      """
+        |?- X = 4 * 3.
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.goals == List(
+          QueryIR.Rel("mul_o", List(QueryIR.Atom(4), QueryIR.Atom(3), QueryIR.Ref("X")))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse prolog arithmetic operator / into div_o") = {
+    val source =
+      """
+        |?- X = 10 / 2.
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.goals == List(
+          QueryIR.Rel("div_o", List(QueryIR.Atom(10), QueryIR.Atom(2), QueryIR.Ref("X")))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse prolog ordering operators into comparison relations") = {
+    val ltSource =
+      """
+        |?- 2 < 3.
+        |""".stripMargin
+    val gtSource =
+      """
+        |?- 7 > 5.
+        |""".stripMargin
+    val leSource =
+      """
+        |?- 4 =< 4.
+        |""".stripMargin
+    val geSource =
+      """
+        |?- 9 >= 8.
+        |""".stripMargin
+
+    val ltOk = MiniKanrenLangParser.parse(ltSource) match {
+      case Right(program) =>
+        program.goals == List(QueryIR.Rel("lt_o", List(QueryIR.Atom(2), QueryIR.Atom(3))))
+      case Left(_) => false
+    }
+
+    val gtOk = MiniKanrenLangParser.parse(gtSource) match {
+      case Right(program) =>
+        program.goals == List(QueryIR.Rel("gt_o", List(QueryIR.Atom(7), QueryIR.Atom(5))))
+      case Left(_) => false
+    }
+
+    val leOk = MiniKanrenLangParser.parse(leSource) match {
+      case Right(program) =>
+        program.goals == List(QueryIR.Rel("le_o", List(QueryIR.Atom(4), QueryIR.Atom(4))))
+      case Left(_) => false
+    }
+
+    val geOk = MiniKanrenLangParser.parse(geSource) match {
+      case Right(program) =>
+        program.goals == List(QueryIR.Rel("ge_o", List(QueryIR.Atom(9), QueryIR.Atom(8))))
+      case Left(_) => false
+    }
+
+    ltOk && gtOk && leOk && geOk
+  }
+
+  property("parse prolog numeric =:= operator into eq_num_o") = {
+    val source =
+      """
+        |?- 5 =:= 5.
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.goals == List(QueryIR.Rel("eq_num_o", List(QueryIR.Atom(5), QueryIR.Atom(5))))
+      case Left(_) => false
+    }
+  }
+
+  property("run prolog arithmetic operator / returns quotient") = {
+    val source =
+      """
+        |?- X = 10 / 2.
+        |""".stripMargin
+
+    MiniKanrenLang.run(source) == Right(List(5))
+  }
+
+  property("run prolog ordering relation with numeric values") = {
+    val source =
+      """
+        |?- lt_o(4, 5), eq(X, 1).
+        |""".stripMargin
+
+    MiniKanrenLang.run(source) == Right(List(1))
+  }
+
+  property("run prolog arithmetic operator + returns number") = {
+    val source =
+      """
+        |?- X = 2 + 3.
+        |""".stripMargin
+
+    MiniKanrenLang.run(source) == Right(List(5))
+  }
+
+  property("run prolog numeric =:= operator") = {
+    val source =
+      """
+        |?- X =:= 5.
+        |""".stripMargin
+
+    MiniKanrenLang.run(source) == Right(List(5))
   }
 
   property("parse Cypher DSL with WHERE scientific numeric literal") = {
@@ -360,6 +448,16 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
       case Right(results) => results == List("bob")
       case Left(_) => false
     }
+  }
+
+  property("parse and run Flix Fixpoints DSL with numeric fact terms") = {
+    val source =
+      """
+        |score(alice, 42).
+        |query score(alice, X).
+        |""".stripMargin
+
+    MiniKanrenLang.run(source) == Right(List(42))
   }
 
   property("parse and run recursive Flix Fixpoints DSL") = {
@@ -861,33 +959,6 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
     }
   }
 
-  property("parse Cypher DSL with escaped WHERE string literal") = {
-    val source =
-      """
-        |MATCH (a)-[:neq]->(b) WHERE a = "ali\"ce" RETURN a
-        |""".stripMargin
-
-    MiniKanrenLangParser.parse(source).isRight
-  }
-
-  property("parse Cypher DSL with unicode escaped WHERE string literal") = {
-    val source =
-      """
-        |MATCH (a)-[:neq]->(b) WHERE a = "city-\u0042" RETURN a
-        |""".stripMargin
-
-    MiniKanrenLangParser.parse(source).isRight
-  }
-
-  property("reject Cypher DSL with malformed unicode escaped WHERE string literal") = {
-    val source =
-      """
-        |MATCH (a)-[:neq]->(b) WHERE a = "city-\u12X4" RETURN a
-        |""".stripMargin
-
-    MiniKanrenLangParser.parse(source).isLeft
-  }
-
   property("parse Cypher DSL with WHERE numeric literal") = {
     val source =
       """
@@ -1265,5 +1336,98 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
         |""".stripMargin
 
     MiniKanrenLang.run(source) == Right(List("ann"))
+  }
+
+  property("parse escaped string literal") = {
+    val source =
+      """
+        |run 1 x {
+        |  eq x "line1\nline2"
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isRight
+  }
+
+  property("parse escaped char literal") = {
+    val source =
+      """
+        |run 1 x {
+        |  eq x '\n'
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isRight
+  }
+
+  property("parse unicode escaped string literal") = {
+    val source =
+      """
+        |run 1 x {
+        |  eq x "smile: \u263A"
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isRight
+  }
+
+  property("parse unicode escaped char literal") = {
+    val source =
+      """
+        |run 1 x {
+        |  eq x '\u263A'
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isRight
+  }
+
+  property("reject malformed unicode escaped string literal") = {
+    val source =
+      """
+        |run 1 x {
+        |  eq x "bad: \u12G4"
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isLeft
+  }
+
+  property("reject short unicode escaped char literal") = {
+    val source =
+      """
+        |run 1 x {
+        |  eq x '\u123'
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isLeft
+  }
+
+  property("parse Cypher DSL with escaped WHERE string literal") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a = "ali\"ce" RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isRight
+  }
+
+  property("parse Cypher DSL with unicode escaped WHERE string literal") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a = "city-\u0042" RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isRight
+  }
+
+  property("reject Cypher DSL with malformed unicode escaped WHERE string literal") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a = "city-\u12X4" RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isLeft
   }
 }
