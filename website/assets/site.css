@@ -233,6 +233,75 @@ h1 {
   min-height: 170px;
 }
 
+.docs-comparison h2 {
+  margin-bottom: 0.5rem;
+}
+
+.docs-table-wrap {
+  overflow-x: auto;
+  margin-top: 0.8rem;
+}
+
+.docs-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 780px;
+}
+
+.docs-table th,
+.docs-table td {
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+  padding: 0.8rem 0.7rem;
+}
+
+.docs-table th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.hint-pop {
+  display: inline-block;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.2rem 0.55rem;
+  background: rgba(20, 33, 38, 0.04);
+}
+
+.hint-pop summary {
+  cursor: pointer;
+  list-style: none;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.hint-pop summary::-webkit-details-marker {
+  display: none;
+}
+
+.hint-pop[open] {
+  background: rgba(47, 143, 131, 0.08);
+}
+
+.hint-pop p {
+  margin: 0.45rem 0 0;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  max-width: 40ch;
+}
+
+.hint-pop.block {
+  display: block;
+  margin: 0.8rem 0;
+  padding: 0.55rem 0.7rem;
+}
+
 .markdown-card {
   padding: 1.75rem;
 }

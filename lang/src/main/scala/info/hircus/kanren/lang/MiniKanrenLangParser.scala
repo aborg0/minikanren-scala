@@ -39,14 +39,44 @@ object MiniKanrenLangParser {
     case "=\\=" => QueryIR.Rel("ne_num_o", List(lhs, rhs))
     case _ => throw new IllegalArgumentException("Unknown operator: " + op)
   }
-  private def stringLit[$: P]: P[String] = P("\"" ~/ CharsWhile(c => c != '"' && c != '\\').! ~ "\"")
-  private def charLit[$: P]: P[Char] = P("'" ~/ CharsWhile(c => c != '\'' && c != '\\').! ~ "'").map(_.charAt(0))
+  private def escapedChar[$: P]: P[Char] =
+    P("\\" ~/ (
+      ("u" ~ CharIn("0-9a-fA-F").rep(exactly = 4).!).map(hex => Integer.parseInt(hex, 16).toChar) |
+      CharIn("\\\"'nrt").!.map {
+        case "\\" => '\\'
+        case "\"" => '"'
+        case "'" => '\''
+        case "n" => '\n'
+        case "r" => '\r'
+        case "t" => '\t'
+        case _ => throw new IllegalArgumentException("Unknown escape sequence")
+      }
+    ))
+
+  private def plainStringChar[$: P]: P[Char] =
+    P(CharPred(c => c != '"' && c != '\\').!).map(_.charAt(0))
+
+  private def plainCharLiteral[$: P]: P[Char] =
+    P(CharPred(c => c != '\'' && c != '\\').!).map(_.charAt(0))
+
+  private def plainSingleQuotedStringChar[$: P]: P[Char] =
+    P(CharPred(c => c != '\'' && c != '\\').!).map(_.charAt(0))
+
+  private def singleQuotedStringLit[$: P]: P[String] =
+    P("'" ~/ (escapedChar | plainSingleQuotedStringChar).rep ~ "'").map(_.mkString)
+
+  private def stringLit[$: P]: P[String] =
+    P("\"" ~/ (escapedChar | plainStringChar).rep ~ "\"").map(_.mkString)
+
+  private def charLit[$: P]: P[Char] =
+    P("'" ~/ (escapedChar | plainCharLiteral) ~ "'")
 
   private def term[$: P]: P[Expr] = P(ws ~ (listTerm | nilTerm | stringTerm | charTerm | numberTerm | varRef) ~ ws)
   private def varRef[$: P]: P[Expr] = ident.map(QueryIR.Ref.apply)
   private def numberTerm[$: P]: P[Expr] = number.map(n => QueryIR.Atom(n))
   private def stringTerm[$: P]: P[Expr] = stringLit.map(s => QueryIR.Atom(s))
   private def charTerm[$: P]: P[Expr] = charLit.map(c => QueryIR.Atom(c))
+  private def singleQuotedStringTerm[$: P]: P[Expr] = singleQuotedStringLit.map(s => QueryIR.Atom(s))
   private def nilTerm[$: P]: P[Expr] = keyword("nil").map(_ => QueryIR.Atom(Nil))
   private def listTerm[$: P]: P[Expr] =
     P("[" ~/ term.rep(sep = ws ~ "," ~ ws) ~ (ws ~ "|" ~/ ws ~ term).? ~ "]").map {
@@ -133,7 +163,7 @@ object MiniKanrenLangParser {
         heads.toList.foldRight(tail: Expr) { case (head, acc) => QueryIR.Pair(head, acc) }
       case (heads, None) => QueryIR.ListExpr(heads.toList)
     }
-  private def prologTerm[$: P]: P[Expr] = P(ws ~ (prologListTerm | nilTerm | stringTerm | charTerm | numberTerm | prologVarTerm | prologAtomTerm) ~ ws)
+  private def prologTerm[$: P]: P[Expr] = P(ws ~ (prologListTerm | nilTerm | stringTerm | singleQuotedStringTerm | charTerm | numberTerm | prologVarTerm | prologAtomTerm) ~ ws)
 
   private def prologCall[$: P]: P[QueryIR.Rel] =
     P(lowerIdent ~ ws ~ "(" ~ ws ~ prologTerm.rep(sep = ws ~ "," ~ ws) ~ ws ~ ")").map {
@@ -219,9 +249,7 @@ object MiniKanrenLangParser {
 
   private def prologRuleDecl[$: P]: P[Declaration] =
     P(prologCall ~ ws ~ ":-" ~ ws ~ prologGoal ~ ws ~ ".").map {
-      value =>
-        val headRel = extractRel(value)
-        val body = extractGoal(value)
+      case (headRel: QueryIR.Rel, body: Goal) =>
         val params = headRel.args.indices.map(i => "_p" + i.toString).toList
         val headMatches = headRel.args.zip(params).map { case (arg, param) => QueryIR.Eq(QueryIR.Ref(param), arg) }
         val ruleBody = QueryIR.Conj(headMatches :+ body)
@@ -361,6 +389,26 @@ object MiniKanrenLangParser {
   private def cypherBoolLit[$: P]: P[Expr] =
     P(StringIn("true", "false").!).map(v => QueryIR.Atom(v == "true"))
 
+  private def cypherNullLit[$: P]: P[Expr] =
+    P("null").map(_ => QueryIR.Atom(null))
+
+  private def cypherNumberAny(raw: String): Any = {
+    val normalized = raw.trim
+    if (normalized.exists(ch => ch == '.' || ch == 'e' || ch == 'E')) normalized.toDouble
+    else normalized.toIntOption.orElse(normalized.toLongOption).getOrElse(normalized.toDouble)
+  }
+
+  private val cypherNumberPattern = "^[+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:[eE][+-]?\\d+)?$".r
+
+  private def cypherNumberToken[$: P]: P[String] =
+    P(CharIn("+\\-0-9.eE").rep(min = 1).!).filter(token => cypherNumberPattern.matches(token))
+
+  private def cypherNumberValue[$: P]: P[Any] =
+    cypherNumberToken.map(cypherNumberAny)
+
+  private def cypherNumberLit[$: P]: P[Expr] =
+    cypherNumberValue.map(v => QueryIR.Atom(v))
+
   private def cypherExprToAny(expr: Expr): Any = expr match {
     case QueryIR.Atom(value) => value
     case QueryIR.ListExpr(items) => items.map(cypherExprToAny)
@@ -369,7 +417,7 @@ object MiniKanrenLangParser {
   }
 
   private def cypherNodePropValue[$: P]: P[Expr] =
-    P(cypherMapValue | cypherListValue | cypherBoolLit | stringLit.map(s => QueryIR.Atom(s): Expr) | number.map(n => QueryIR.Atom(n): Expr))
+    P(cypherMapValue | cypherListValue | cypherBoolLit | cypherNullLit | stringLit.map(s => QueryIR.Atom(s): Expr) | cypherNumberLit)
 
   private def cypherMapValue[$: P]: P[Expr] =
     P("{" ~ ws ~ cypherNodeProp.rep(sep = ws ~ "," ~ ws) ~ ws ~ "}").map { entries =>
@@ -441,8 +489,10 @@ object MiniKanrenLangParser {
   private def cypherWhereOperand[$: P]: P[CypherWhereOperand] =
     P(
       (cypherIdent.! ~ ws ~ "." ~ ws ~ cypherIdent.!).map { case (base, field) => CyWhereProp(base, field): CypherWhereOperand } |
+        StringIn("true", "false").!.map(v => CyWhereAtom(v == "true"): CypherWhereOperand) |
+        "null".map(_ => CyWhereAtom(null): CypherWhereOperand) |
         stringLit.map(s => CyWhereAtom(s): CypherWhereOperand) |
-        number.map(n => CyWhereAtom(n): CypherWhereOperand) |
+        cypherNumberValue.map(v => CyWhereAtom(v): CypherWhereOperand) |
         cypherIdent.!.map(name => CyWhereRef(name): CypherWhereOperand)
     )
 
@@ -537,7 +587,7 @@ object MiniKanrenLangParser {
         val goals = matchGoals ++ whereGoals ++ returnGoals
         QueryIR.Program(focus = focus, goals = goals, limit = -1, constrained = false)
     }
-  private def rootCypher[$: P]: P[Program] = P(ws ~ cypherQuery ~ ws ~ End)
+  private def rootCypher[$: P]: P[Program] = P(ws ~ cypherQuery ~ ws ~ ";".? ~ ws ~ End)
 
   private def rootOld[$: P]: P[Program] = P(ws ~ runProgram ~ ws ~ End)
   private def rootNew[$: P]: P[Program] = P(declarativeProgram)

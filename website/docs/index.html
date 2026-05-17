@@ -17,7 +17,97 @@
       <p>These pages render the generated mdoc markdown published with the site artifact.</p>
     </header>
 
+    <section class="card docs-comparison">
+      <h2>DSL Comparison</h2>
+      <p>Use this quick matrix to choose the right frontend for your task. Open the hints for feature notes.</p>
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <thead>
+            <tr>
+              <th>DSL</th>
+              <th>Best For</th>
+              <th>Example</th>
+              <th>Feature Hints</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Core Scala API</td>
+              <td>Full engine control and direct relation composition</td>
+              <td><code>run(-1, x)(member_o(x, list2pair(List(1, 2, 3))))</code></td>
+              <td>
+                <details class="hint-pop">
+                  <summary>Hints</summary>
+                  <p>Closest to internal primitives and substitutions. Great for advanced control and performance tuning.</p>
+                </details>
+              </td>
+            </tr>
+            <tr>
+              <td>Scala 3 DSL</td>
+              <td>Idiomatic Scala query writing</td>
+              <td><code>run(v("x"), -1)(contains(v("x"), list(1, 2, 3))).toList</code></td>
+              <td>
+                <details class="hint-pop">
+                  <summary>Hints</summary>
+                  <p>Readable operators like <code>===</code>, aliases such as <code>contains</code>, and list-normalized outputs.</p>
+                </details>
+              </td>
+            </tr>
+            <tr>
+              <td>External DSL</td>
+              <td>Script-like input and parser experimentation</td>
+              <td><code>run -1 x { member_o(x, [1, 2, 3]) }</code></td>
+              <td>
+                <details class="hint-pop">
+                  <summary>Hints</summary>
+                  <p>Supports classic syntax plus declarative, Prolog-like, Flix-like, and Cypher-like modes.</p>
+                </details>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <section class="grid two-up docs-grid" id="docs-list"></section>
+
+    <section class="card docs-comparison">
+      <h2>External DSL Modes</h2>
+      <p>The external DSL supports multiple parser modes designed for specific task styles. Each mode can be explicitly selected using a <code>#!</code> header.</p>
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <thead>
+            <tr>
+              <th>Mode</th>
+              <th>Syntactic Style</th>
+              <th>Primary Feature</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>#!declarative</code></td>
+              <td>Infix notation</td>
+              <td>Explicit <code>ask</code> queries and <code>const</code> declarations</td>
+            </tr>
+            <tr>
+              <td><code>#!prolog</code></td>
+              <td>Logic programming</td>
+              <td>Traditional <code>head :- body.</code> rules and <code>?-</code> queries</td>
+            </tr>
+            <tr>
+              <td><code>#!flix</code></td>
+              <td>Datalog-like</td>
+              <td>Fact-first definitions with <code>query</code> execution</td>
+            </tr>
+            <tr>
+              <td><code>#!cypher</code></td>
+              <td>Graph-like</td>
+              <td><code>MATCH</code> patterns with <code>WHERE</code> filtering and <code>RETURN</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </main>
 
   <script src="../assets/site-app.js"></script>

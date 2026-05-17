@@ -2,3 +2,11 @@ TODO
 ====
 
 - Arithmetic operations
+- Generator for the parsers
+- Review the documentation
+- Improve error messages
+- Increase coverage
+- Possibly allow parallel executions for certain cases
+  - Maybe an implementation with cyfra
+- Evaluate other streaming options (the branch fs2 contains fs2 and fairstreams)
+- Maybe add `@assumeSafe` annotations

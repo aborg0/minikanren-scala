@@ -40,7 +40,7 @@ lazy val root = project.in(file(".")).
   )
 
 lazy val commonSettings = Seq(
-  version := "0.1-SNAPSHOT",
+  version := sys.env.getOrElse("PUBLISH_VERSION", "0.1-SNAPSHOT"),
 
   scalacOptions ++= Seq(
     //"-target:jvm-1.8", // not applicable in 2.10

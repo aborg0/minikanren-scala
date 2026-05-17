@@ -32,16 +32,16 @@
 
   var dslTemplates = {
     legacy: "run -1 x {\n  member_o(x, [1, 2, 3])\n}",
-    declarative: "#!declarative\nrun -1 x where {\n  x = 1 or x = 2\n}",
-    prolog: "#!prolog\nrun -1 x { member_o(x, [1, 2, 3]). }",
-    flix: "#!flix\nrun -1 p {\n  Parent(\"alice\", \"bob\").\n  Parent(\"bob\", \"charlie\").\n  Ancestor(x, y) :- Parent(x, y).\n  Ancestor(x, z) :- Parent(x, y), Ancestor(y, z).\n  Ancestor(\"alice\", p)?\n}",
-    cypher: "#!cypher\nMATCH (a {name: \"alice\"})-[:parent]->(b)\nRETURN b",
-    kinship: "#!prolog\n% Kinship rules\nparent(pam, bob).\nparent(tom, bob).\nparent(bob, ann).\n\ngrandparent(G, C) :- parent(G, P), parent(P, C).\n\n% Find all grandchildren of pam\nrun -1 x { grandparent(pam, x). }",
-    reachability: "#!cypher\n// Find paths up to 3 hops away\nMATCH (a {id: 1})-[:edge]->(b)-[:edge]->(c)-[:edge]->(d)\nRETURN d",
-    list_ops: "#!declarative\nrun -1 q where {\n  q = [1, 2] ++ [3, 4]\n}",
-    append_o: "#!prolog\n% Standard logic programming append\nappend([], L, L).\nappend([H|T], L, [H|R]) :- append(T, L, R).\n\n% Run in reverse: find all pairs that sum to [1, 2, 3]\nrun -1 [x, y] { append(x, y, [1, 2, 3]). }",
-    zebra_mini: "#!declarative\n% A tiny fragment of a zebra puzzle\nrun -1 [h1, h2] where {\n  h1 = \"red\" and h2 = \"blue\"\n  or\n  h1 = \"blue\" and h2 = \"red\"\n}",
-    cypher_filter: "#!cypher\nMATCH (n:Person)\nWHERE n.age > 30 AND n.city = \"London\"\nRETURN n.name"
+    declarative: "#!declarative\nconst Anakin, Luke, Leia\nvar x, y, z\nrel/2 infix fatherOf\nAnakin fatherOf Luke\nAnakin fatherOf Leia\nsibling(x, y) = fatherOf(z, x) & fatherOf(z, y) & not x = y\nask x sibling(Luke, x)",
+    prolog: "#!prolog\nfather_of(anakin, luke).\nfather_of(anakin, leia).\n?- father_of(anakin, Y).",
+    flix: "#!flix\nparent(alice, bob).\nparent(bob, carol).\nancestor(X, Y) :- parent(X, Y).\nquery ancestor(alice, Y).",
+    cypher: "#!cypher\n// Scenario: two distinct cities.\n// neq edge means the nodes are constrained to differ.\n// WHERE grounds both; RETURN a yields the source city.\n// Expected result: Paris\nMATCH (a)-[:neq]->(b) WHERE a = \"Paris\" AND b = \"Berlin\" RETURN a",
+    kinship: "#!prolog\nparent(pam, bob).\nparent(tom, bob).\nparent(bob, ann).\n\ngrandparent(G, C) :- parent(G, P), parent(P, C).\n?- grandparent(pam, X).",
+    reachability: "#!cypher\n// Chain: A --neq--> B --neq--> C (2-hop path).\n// neq edges constrain adjacent nodes to differ.\n// WHERE pins all three; RETURN c gives the end of the chain.\n// Expected result: C\nMATCH (a)-[:neq]->(b), (b)-[:neq]->(c) WHERE a = \"A\" AND b = \"B\" AND c = \"C\" RETURN c",
+    list_ops: "#!declarative\nvar h, t\nask h [h | t] = [1, 2, 3]",
+    append_o: "#!prolog\n?- append_o([1, 2], [3], X).",
+    zebra_mini: "#!declarative\nconst Red, Blue\nvar x, y, z\nrel/2 infix leftOf\nRed leftOf Blue\nBlue leftOf Red\nneq(x, y) = not x = y\nask x leftOf(Red, x) & neq(x, Red)",
+    cypher_filter: "#!cypher\nMATCH (a)-[:neq]->(b)\nWHERE a = \"London\" AND b <> 30\nRETURN a"
   };
 
   function bindScala3Playground(elements) {

@@ -7,6 +7,26 @@ import info.hircus.kanren.lang.MiniKanrenLang
 import info.hircus.kanren.lang.MiniKanrenLangParser
 ```
 
+## Supported DSL comparison
+
+miniKanren-scala supports multiple frontends over the same engine:
+
+- Core Scala API for direct relation composition in Scala
+- Scala 3 DSL for idiomatic operators and aliases
+- External DSL (this page) for source-text queries and parser modes
+
+External DSL classic syntax example:
+
+```scala mdoc
+MiniKanrenLang.run(
+  """
+    |run -1 x {
+    |  member_o(x, [1, 2, 3])
+    |}
+    |""".stripMargin
+)
+```
+
 ## Basic equality
 
 ```scala mdoc
@@ -159,11 +179,80 @@ val modSource =
 MiniKanrenLang.run(modSource)
 ```
 
+```scala mdoc
+val escapedStringSource =
+  """
+    |run 1 x {
+    |  eq x "line1\nline2"
+    |}
+    |""".stripMargin
+
+MiniKanrenLang.run(escapedStringSource)
+```
+
+```scala mdoc
+val unicodeEscapedStringSource =
+  """
+    |run 1 x {
+    |  eq x "smile: \u263A"
+    |}
+    |""".stripMargin
+
+MiniKanrenLang.run(unicodeEscapedStringSource)
+```
+
+String and char literals support common escapes such as `\"`, `\\`, `\n`, `\r`, `\t`, and unicode escapes like `\u263A`.
+
+Malformed unicode escapes (for example `\u12X4` or incomplete `\u123`) are rejected as parse errors.
+
 Available conversion helpers include:
 
 - `atom_number/2`
 - `number_codes/2`
 - `number_chars/2`
+
+## Bottles puzzle feasibility (3L and 5L to reach 4L)
+
+A first-pass feasibility criterion for capacity list `capacities` and target `t` is:
+
+- capacities are non-negative
+- `t <= capacities.max`
+- `t % gcd(capacities) == 0`
+
+Use miniKanren checks from the external DSL by composing built-in relations.
+
+```scala mdoc
+def gcdAll(values: List[Int]): Int =
+  values.map(math.abs).reduce((a, b) => BigInt(a).gcd(BigInt(b)).toInt)
+
+val capacities = List(3, 5)
+val target = 4
+val gcd = gcdAll(capacities)
+val capacitiesLiteral = capacities.mkString("[", ", ", "]")
+
+val bottleFeasibilitySource =
+  s"""
+     |run 1 verdict {
+     |  member_o(cap, $capacitiesLiteral);
+     |  ge_o(cap, $target);
+     |  mod_o($target, $gcd, 0);
+     |  eq verdict "possible"
+     |}
+     |""".stripMargin
+
+MiniKanrenLang.run(bottleFeasibilitySource)
+```
+
+A concrete action sequence for reaching 4L is:
+
+1. `(0, 5)`
+2. `(3, 2)`
+3. `(0, 2)`
+4. `(2, 0)`
+5. `(2, 5)`
+6. `(3, 4)`
+
+The natural next extension is to encode bottle states and transitions as relations and query for a path.
 
 ## Flix Fixpoints DSL (Experimental)
 
@@ -366,6 +455,24 @@ MiniKanrenLangParser.parse(cypherNodePropsNestedMapInListSource)
 ```
 
 ```scala mdoc
+val cypherNodePropsNullSource =
+  """
+    |MATCH (a {middleName: null})-[:parent]->(b) RETURN a
+    |""".stripMargin
+
+MiniKanrenLangParser.parse(cypherNodePropsNullSource)
+```
+
+```scala mdoc
+val cypherNodePropsDecimalSource =
+  """
+    |MATCH (a {score: 42.5})-[:parent]->(b) RETURN a
+    |""".stripMargin
+
+MiniKanrenLangParser.parse(cypherNodePropsDecimalSource)
+```
+
+```scala mdoc
 val cypherWhereStringLiteralSource =
   """
     |MATCH (a)-[:neq]->(b) WHERE a = "alice" RETURN a
@@ -381,6 +488,60 @@ val cypherWhereNumericLiteralSource =
     |""".stripMargin
 
 MiniKanrenLangParser.parse(cypherWhereNumericLiteralSource)
+```
+
+```scala mdoc
+val cypherWhereScientificLiteralSource =
+  """
+    |MATCH (a)-[:neq]->(b) WHERE b <> 1e3 RETURN a
+    |""".stripMargin
+
+MiniKanrenLangParser.parse(cypherWhereScientificLiteralSource)
+```
+
+```scala mdoc
+val cypherWhereNegativeScientificLiteralSource =
+  """
+    |MATCH (a)-[:neq]->(b) WHERE b = -2.5e-2 RETURN a
+    |""".stripMargin
+
+MiniKanrenLangParser.parse(cypherWhereNegativeScientificLiteralSource)
+```
+
+```scala mdoc
+val cypherWhereBooleanLiteralSource =
+  """
+    |MATCH (a)-[:neq]->(b) WHERE a = true RETURN a
+    |""".stripMargin
+
+MiniKanrenLangParser.parse(cypherWhereBooleanLiteralSource)
+```
+
+```scala mdoc
+val cypherWherePropertyBooleanSource =
+  """
+    |MATCH (a)-[:neq]->(b) WHERE b.active <> false RETURN a
+    |""".stripMargin
+
+MiniKanrenLangParser.parse(cypherWherePropertyBooleanSource)
+```
+
+```scala mdoc
+val cypherWhereNullLiteralSource =
+  """
+    |MATCH (a)-[:neq]->(b) WHERE a = null RETURN a
+    |""".stripMargin
+
+MiniKanrenLangParser.parse(cypherWhereNullLiteralSource)
+```
+
+```scala mdoc
+val cypherTrailingSemicolonSource =
+  """
+    |MATCH (a)-[:neq]->(b) RETURN a;
+    |""".stripMargin
+
+MiniKanrenLangParser.parse(cypherTrailingSemicolonSource)
 ```
 
 ```scala mdoc
@@ -428,12 +589,13 @@ Supported now:
 - Undirected edges: `(a)-[:rel]-(b)`
 - Relationship variables: `[r:REL]`
 - Node labels: `(a:Person)`
-- Node property maps: `(a {name: "alice", age: 42, active: true, tags: ["scala", "kanren"], meta: {rank: 1}})`
+- Node property maps: `(a {name: "alice", age: 42, active: true, tags: ["scala", "kanren"], meta: {rank: 1}, middleName: null})`
 - `WHERE` with `=` and `<>`
 - `WHERE` predicates joined by `AND` and `OR`
 - Parenthesized grouping in `WHERE`
-- Operand forms in `WHERE`: variable, string literal, numeric literal, property access (`a.name`)
+- Operand forms in `WHERE`: variable, string literal, numeric literal (including decimal/scientific), boolean literal, null literal, property access (`a.name`)
 - `RETURN` with one variable or multiple variables (`RETURN a, b`)
+- Optional trailing semicolon after the query (`... RETURN a;`)
 - Explicit parser mode header: `#!cypher`
 
 Current lowering rules:

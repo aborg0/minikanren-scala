@@ -90,6 +90,7 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          PUBLISH_VERSION: "0.1.${{ github.run_number }}-SNAPSHOT"
         run: >-
           SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++${{ matrix.scala }} miniKanrenJVM/publish miniKanrenJS/publish
 
@@ -100,6 +101,7 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          PUBLISH_VERSION: "0.1.${{ github.run_number }}-SNAPSHOT"
         run: >-
           SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.8.3 miniKanrenJVM/publish miniKanrenJS/publish miniKanrenScala3DSLCrossJVM/publish miniKanrenScala3DSLCrossJS/publish miniKanrenLangCrossJVM/publish miniKanrenLangCrossJS/publish
 

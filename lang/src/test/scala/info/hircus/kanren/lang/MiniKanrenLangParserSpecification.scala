@@ -43,6 +43,72 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
     MiniKanrenLang.run(source) == Right(List(1, 2, 3))
   }
 
+  property("parse escaped string literal") = {
+    val source =
+      """
+        |run 1 x {
+        |  eq x "line1\nline2"
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isRight
+  }
+
+  property("parse escaped char literal") = {
+    val source =
+      """
+        |run 1 x {
+        |  eq x '\n'
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isRight
+  }
+
+  property("parse unicode escaped string literal") = {
+    val source =
+      """
+        |run 1 x {
+        |  eq x "smile: \u263A"
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isRight
+  }
+
+  property("parse unicode escaped char literal") = {
+    val source =
+      """
+        |run 1 x {
+        |  eq x '\u263A'
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isRight
+  }
+
+  property("reject malformed unicode escaped string literal") = {
+    val source =
+      """
+        |run 1 x {
+        |  eq x "bad: \u12G4"
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isLeft
+  }
+
+  property("reject short unicode escaped char literal") = {
+    val source =
+      """
+        |run 1 x {
+        |  eq x '\u123'
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isLeft
+  }
+
   property("parse and run declarative infix syntax") = {
     val source =
       """
@@ -82,6 +148,40 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
           case QueryIR.Rule("sibling", _, _) => true
           case _ => false
         }
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with WHERE scientific numeric literal") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE b <> 1e3 RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(
+            QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+            QueryIR.Neq(QueryIR.Ref("b"), QueryIR.Atom(1000.0))
+          )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with WHERE negative scientific numeric literal") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE b = -2.5e-2 RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(
+            QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+            QueryIR.Eq(QueryIR.Ref("b"), QueryIR.Atom(-0.025))
+          )
       case Left(_) => false
     }
   }
@@ -141,6 +241,23 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
 
     MiniKanrenLangParser.parse(source) match {
       case Right(program) => program.goals.nonEmpty
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with decimal node property map value") = {
+    val source =
+      """
+        |MATCH (a {score: 42.5})-[:parent]->(b) RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(
+            QueryIR.Rel("parent", List(QueryIR.Ref("a"), QueryIR.Ref("b"))),
+            QueryIR.Rel("prop_o", List(QueryIR.Ref("a"), QueryIR.Atom("score"), QueryIR.Atom(42.5)))
+          )
       case Left(_) => false
     }
   }
@@ -617,6 +734,23 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
     }
   }
 
+  property("parse Cypher DSL with null node property map value") = {
+    val source =
+      """
+        |MATCH (a {middleName: null})-[:parent]->(b) RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(
+            QueryIR.Rel("parent", List(QueryIR.Ref("a"), QueryIR.Ref("b"))),
+            QueryIR.Rel("prop_o", List(QueryIR.Ref("a"), QueryIR.Atom("middleName"), QueryIR.Atom(null)))
+          )
+      case Left(_) => false
+    }
+  }
+
   property("parse Cypher DSL with explicit header") = {
     val source =
       """
@@ -734,6 +868,33 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
     }
   }
 
+  property("parse Cypher DSL with escaped WHERE string literal") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a = "ali\"ce" RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isRight
+  }
+
+  property("parse Cypher DSL with unicode escaped WHERE string literal") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a = "city-\u0042" RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isRight
+  }
+
+  property("reject Cypher DSL with malformed unicode escaped WHERE string literal") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a = "city-\u12X4" RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isLeft
+  }
+
   property("parse Cypher DSL with WHERE numeric literal") = {
     val source =
       """
@@ -747,6 +908,90 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
           QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
           QueryIR.Neq(QueryIR.Ref("b"), QueryIR.Atom(42))
         )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with WHERE boolean literal") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a = true RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Eq(QueryIR.Ref("a"), QueryIR.Atom(true))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with WHERE property and boolean literal") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE b.active <> false RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+        program.goals == List(
+          QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+          QueryIR.Rel("prop_o", List(QueryIR.Ref("b"), QueryIR.Atom("active"), QueryIR.Ref("_cy_prop_0"))),
+          QueryIR.Neq(QueryIR.Ref("_cy_prop_0"), QueryIR.Atom(false))
+        )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with WHERE null literal") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE a = null RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(
+            QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+            QueryIR.Eq(QueryIR.Ref("a"), QueryIR.Atom(null))
+          )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with WHERE property and null literal") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) WHERE b.middleName <> null RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(
+            QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")),
+            QueryIR.Rel("prop_o", List(QueryIR.Ref("b"), QueryIR.Atom("middleName"), QueryIR.Ref("_cy_prop_0"))),
+            QueryIR.Neq(QueryIR.Ref("_cy_prop_0"), QueryIR.Atom(null))
+          )
+      case Left(_) => false
+    }
+  }
+
+  property("parse Cypher DSL with trailing semicolon") = {
+    val source =
+      """
+        |MATCH (a)-[:neq]->(b) RETURN a;
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source) match {
+      case Right(program) =>
+        program.focus == "a" &&
+          program.goals == List(QueryIR.Neq(QueryIR.Ref("a"), QueryIR.Ref("b")))
       case Left(_) => false
     }
   }
@@ -988,5 +1233,44 @@ object MiniKanrenLangParserSpecification extends Properties("MiniKanrenLangParse
       case Right(program) => program.focus == "a" && program.goals.nonEmpty
       case Left(_) => false
     }
+  }
+
+  property("cypher DSL rejects unterminated block comments") = {
+    val source =
+      """
+        |#!cypher
+        |MATCH (a)-[:neq]->(b) /* missing end RETURN a
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isLeft
+  }
+
+
+
+
+  property("legacy DSL rejects unterminated block comments") = {
+    val source =
+      """
+        |run 1 x {
+        |  eq x 7 /* missing end
+        |}
+        |""".stripMargin
+
+    MiniKanrenLangParser.parse(source).isLeft
+  }
+
+  property("prolog DSL executes user-defined rule with conjunction body (grandparent)") = {
+    val source =
+      """
+        |#!prolog
+        |parent(pam, bob).
+        |parent(tom, bob).
+        |parent(bob, ann).
+        |
+        |grandparent(G, C) :- parent(G, P), parent(P, C).
+        |?- grandparent(pam, X).
+        |""".stripMargin
+
+    MiniKanrenLang.run(source) == Right(List("ann"))
   }
 }
