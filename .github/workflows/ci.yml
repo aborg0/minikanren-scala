@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scala: ["2.12.21", "2.13.18", "3.8.3"]
+        scala: ["2.12.21", "2.13.18", "3.3.7", "3.8.3"]
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -63,16 +63,26 @@ jobs:
             ${{ runner.os }}-sbt-
 
       - name: Build JVM targets (Scala 2.x)
-        if: matrix.scala != '3.8.3'
+        if: matrix.scala != '3.8.3' && matrix.scala != '3.3.7'
         run: >-
           SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++${{ matrix.scala }} clean miniKanrenJVM/doc coverage miniKanrenJVM/test miniKanrenExamplesJVM/mdoc miniKanrenJVM/coverageReport
 
-      - name: Build Scala 3 JVM modules
+      - name: Build Scala 3.3 JVM modules
+        if: matrix.scala == '3.3.7'
+        run: >-
+          SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.3.7 clean miniKanrenJVM/doc coverage miniKanrenJVM/test miniKanrenExamplesJVM/mdoc miniKanrenScala3DSLCrossJVM/test miniKanrenLangCrossJVM/test coverageAggregate
+
+      - name: Build and test 3.3 Scala.js targets
+        if: matrix.scala == '3.3.7'
+        run: >-
+          SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.3.7 miniKanrenJS/test miniKanrenExamplesJS/test miniKanrenScala3DSLCrossJS/test miniKanrenLangCrossJS/test miniKanrenWebsite/fullLinkJS
+
+      - name: Build Scala 3.8 JVM modules
         if: matrix.scala == '3.8.3'
         run: >-
           SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.8.3 clean miniKanrenJVM/doc coverage miniKanrenJVM/test miniKanrenExamplesJVM/mdoc miniKanrenScala3DSLCrossJVM/test miniKanrenLangCrossJVM/test coverageAggregate
 
-      - name: Build and test Scala.js targets
+      - name: Build and test 3.8 Scala.js targets
         if: matrix.scala == '3.8.3'
         run: >-
           SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.8.3 miniKanrenJS/test miniKanrenExamplesJS/test miniKanrenScala3DSLCrossJS/test miniKanrenLangCrossJS/test miniKanrenWebsite/fullLinkJS
@@ -84,7 +94,7 @@ jobs:
         run: SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.8.3 coveralls
 
       - name: Publish snapshot artifacts (Scala 2.x JVM + JS)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/cleanup' && matrix.scala != '3.8.3'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/cleanup' && matrix.scala != '3.8.3' && matrix.scala != '3.3.7'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
@@ -95,7 +105,7 @@ jobs:
           SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++${{ matrix.scala }} miniKanrenJVM/publish miniKanrenJS/publish
 
       - name: Publish snapshot artifacts (Scala 3 JVM + JS)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/cleanup' && matrix.scala == '3.8.3'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/cleanup' && matrix.scala == '3.3.7'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
@@ -103,7 +113,7 @@ jobs:
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
           PUBLISH_VERSION: "0.1.${{ github.run_number }}-SNAPSHOT"
         run: >-
-          SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.8.3 miniKanrenJVM/publish miniKanrenJS/publish miniKanrenScala3DSLCrossJVM/publish miniKanrenScala3DSLCrossJS/publish miniKanrenLangCrossJVM/publish miniKanrenLangCrossJS/publish
+          SBT_OPTS=-Dsbt.server.autostart=false sbt -v ++3.3.7 miniKanrenJVM/publish miniKanrenJS/publish miniKanrenScala3DSLCrossJVM/publish miniKanrenScala3DSLCrossJS/publish miniKanrenLangCrossJVM/publish miniKanrenLangCrossJS/publish
 
   pages:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/cleanup')

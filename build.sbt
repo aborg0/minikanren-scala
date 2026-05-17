@@ -5,7 +5,7 @@ import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 enablePlugins(ScalaJSPlugin, LaikaPlugin)
 
 name := "Scala miniKanren root project"
-ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.8.3")
+ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.3.7", "3.8.3")
 ThisBuild / scalaVersion := "2.13.18"
 ThisBuild / publishTo := {
   val owner = sys.env.getOrElse("GITHUB_REPOSITORY_OWNER", "michel-slm")
@@ -41,7 +41,7 @@ lazy val root = project.in(file(".")).
 
 lazy val commonSettings = Seq(
   version := sys.env.getOrElse("PUBLISH_VERSION", "0.1-SNAPSHOT"),
-
+  organization := "com.github.aborg0",
   scalacOptions ++= Seq(
     //"-target:jvm-1.8", // not applicable in 2.10
     "-deprecation",
@@ -54,7 +54,7 @@ lazy val commonSettings = Seq(
     //"-language:reflectiveCalls",
     //"-Xfatal-warnings"
   ) ++ (
-    if (scalaVersion.value.startsWith("3")) Seq() else Seq(
+    if (scalaVersion.value.startsWith("3")) if (scalaVersion.value.startsWith("3.3")) Seq("-Yfuture-lazy-vals") else Seq() else Seq(
       "-Xlint",
       "-Ywarn-dead-code",
       "-Ywarn-numeric-widen",
